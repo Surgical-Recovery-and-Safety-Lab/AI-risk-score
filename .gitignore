@@ -3,3 +3,6 @@ data/
 
 # Ignore generated figures
 figures/
+
+# Ignore logs
+logs/
