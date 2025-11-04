@@ -58,7 +58,7 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        print("Loading features")
+        logger.info("Loading features")
         feature_list = pyrisk.utils.io.read_toml_configuration(args.feature_list_file)
     except (
         TypeError,
@@ -68,14 +68,16 @@ if __name__ == "__main__":
         FileNotFoundError,
     ):
         logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
+        sys.stderr.write(
+            log_config["logger.info_message"] + f"{log_path}/{script_name}.log"
+        )
         exit(1)
 
     features = ",".join(feature_list["features"])
     query = f"SELECT {features} FROM {args.table_name};"
 
     try:
-        print("Extracting data")
+        logger.info("Extracting data")
         df = pyrisk.data.db.extract_data_from_duckdb(args.duckdb_file, query)
     except (
         TypeError,
@@ -84,7 +86,9 @@ if __name__ == "__main__":
         FileNotFoundError,
     ):
         logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
+        sys.stderr.write(
+            log_config["logger.info_message"] + f"{log_path}/{script_name}.log"
+        )
         exit(1)
     except Exception:
         logger.exception(log_config["log_message"] + f"{script_name}")
@@ -104,9 +108,9 @@ if __name__ == "__main__":
         ):
             logger.exception(log_config["log_message"] + f"{script_name}")
             sys.stderr.write(
-                log_config["print_message"] + f"{log_path}/{script_name}.log"
+                log_config["logger.info_message"] + f"{log_path}/{script_name}.log"
             )
             exit(1)
 
-        print("Saving data")
+        logger.info("Saving data")
         df.to_csv(args.save_file)
