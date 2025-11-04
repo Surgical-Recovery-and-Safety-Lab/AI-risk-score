@@ -1,0 +1,16 @@
+version = "v0.0.1"
+data_file = "ai_risk_data"
+
+[load_parameters]
+load_dir = "/home/mroe734/Documents/srs/AI-risk-score/data/processed/"
+extension = ".csv"
+
+[split_variables]
+random_state = 42
+train_split = 0.8
+
+[save_parameters]
+save_dir = "/home/mroe734/Documents/srs/AI-risk-score/data/processed/"
+train_suffix = "train"
+test_suffix = "test"
+extension = ".csv"
