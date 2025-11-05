@@ -1,4 +1,5 @@
+version = "v0.0.1"
 log_path = "/home/mroe734/Documents/srs/AI-risk-score/logs"
 log_message = "Exception raised in "
-print_message = "An exception was raised. Check logs "
-unexpected_message = "An unexpected error occurred. Check logs "
+print_message = "[ERROR] An exception was raised.\n\nCheck logs "
+unexpected_message = "[ERROR] An unexpected error occurred.\n\nCheck logs "
