@@ -47,7 +47,7 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        logger.info("Loading data configuration")
+        print("[INFO] Loading data configuration")
         data_config = pyrisk.utils.io.read_toml_configuration(args.data_config_file)
     except (
         TypeError,
@@ -61,14 +61,14 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        logger.info("Loading data")
-        load_dict = data_config["load_parameters"]
+        print("[INFO] Loading data")
         data = pyrisk.utils.io.load_data_from_csv(
-            load_dict["load_dir"] + data_config["data_file"] + load_dict["extension"]
+            pyrisk.utils.config.get_file_path(data_config)
         )
     except (
         TypeError,
         ValueError,
+        KeyError,
         IsADirectoryError,
         FileNotFoundError,
     ):
@@ -77,12 +77,12 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        logger.info("Splitting data")
+        print("[INFO] Splitting data")
         split_vars = data_config["split_variables"]
         train_data, test_data = pyrisk.data.preprocessing.split_test_train(
             data, split_vars["train_split"], split_vars["random_state"]
         )
-    except (TypeError, ValueError):
+    except (TypeError, KeyError, ValueError):
         logger.exception(log_config["log_message"] + f"{script_name}")
         sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
         exit(1)
@@ -95,21 +95,21 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        logger.info("Saving train data")
-        save_parameters = data_config["save_parameters"]
+        print("[INFO] Saving train data")
+        io_parameters = data_config["io_parameters"]
         pyrisk.utils.io.save_data_to_csv(
             train_data,
-            save_parameters["save_dir"]
-            + "_".join((data_config["data_file"], save_parameters["train_suffix"]))
-            + save_parameters["extension"],
+            pyrisk.utils.config.get_file_path(
+                data_config, path_type="io", suffix=io_parameters["train_suffix"]
+            ),
         )
 
-        logger.info("Saving test data")
+        print("[INFO] Saving test data")
         pyrisk.utils.io.save_data_to_csv(
-            train_data,
-            save_parameters["save_dir"]
-            + "_".join((data_config["data_file"], save_parameters["test_suffix"]))
-            + save_parameters["extension"],
+            test_data,
+            pyrisk.utils.config.get_file_path(
+                data_config, path_type="io", suffix=io_parameters["test_suffix"]
+            ),
         )
 
     except (TypeError, ValueError):
