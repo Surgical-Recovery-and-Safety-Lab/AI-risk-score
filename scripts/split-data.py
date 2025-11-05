@@ -97,22 +97,27 @@ if __name__ == "__main__":
     try:
         print("[INFO] Saving train data")
         io_parameters = data_config["io_parameters"]
-        pyrisk.utils.io.save_data_to_csv(
-            train_data,
+        train_data.to_csv(
             pyrisk.utils.config.get_file_path(
                 data_config, path_type="io", suffix=io_parameters["train_suffix"]
             ),
+            index=False,
         )
 
         print("[INFO] Saving test data")
-        pyrisk.utils.io.save_data_to_csv(
-            test_data,
+        test_data.to_csv(
             pyrisk.utils.config.get_file_path(
                 data_config, path_type="io", suffix=io_parameters["test_suffix"]
             ),
+            index=False,
         )
 
-    except (TypeError, ValueError):
+    except (
+        TypeError,
+        ValueError,
+        IsADirectoryError,
+        FileNotFoundError,
+    ):
         logger.exception(log_config["log_message"] + f"{script_name}")
         sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
         exit(1)
