@@ -49,15 +49,10 @@ if __name__ == "__main__":
     try:
         print("[INFO] Loading configuration")
         data_config = pyrisk.utils.io.read_toml_configuration(args.data_config_file)
-    except (
-        TypeError,
-        ValueError,
-        IsADirectoryError,
-        TOMLDecodeError,
-        FileNotFoundError,
-    ):
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
+    except Exception:
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
+        )
         exit(1)
 
     features = ",".join(data_config["features"]["feature_list"])
@@ -72,14 +67,9 @@ if __name__ == "__main__":
             ),
             query,
         )
-    except (TypeError, ValueError, IsADirectoryError, FileNotFoundError):
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
-        exit(1)
     except Exception:
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
         )
         exit(1)
 
@@ -89,34 +79,23 @@ if __name__ == "__main__":
         # If the preprocess flag is true
         print("[INFO] Preprocessing data")
         try:
-            if preprocessing_config["convert_object_to_categorical"]:
-                df = pyrisk.data.preprocessing.convert_object_to_categorical(df)
-
             if preprocessing_config["label_encoder"]["feature_list"] != []:
                 df = pyrisk.data.preprocessing.label_encode_data(
                     df, preprocessing_config["label_encoder"]["feature_list"]
                 )
 
-        except (TypeError, ValueError, KeyError):
-            logger.exception(log_config["log_message"] + f"{script_name}")
-            sys.stderr.write(
-                log_config["print_message"] + f"{log_path}/{script_name}.log"
-            )
-            exit(1)
         except Exception:
-            logger.exception(log_config["log_message"] + f"{script_name}")
-            sys.stderr.write(
-                log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+            pyrisk.utils.exceptions.exception_handler(
+                logger, log_path, log_config, script_name
             )
             exit(1)
-
+        breakpoint()
     try:
-        save_file = pyrisk.utils.config.get_file_path(data_config, path_type="io")
         print("[INFO] Saving data")
+        save_file = pyrisk.utils.config.get_file_path(data_config, path_type="io")
         df.to_csv(save_file, index=False)
     except Exception:
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
         )
         exit(1)
