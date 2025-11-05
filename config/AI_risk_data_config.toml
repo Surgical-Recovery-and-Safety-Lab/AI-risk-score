@@ -40,8 +40,7 @@ label_list = [
 ]
 
 [preprocessing]
-preprocess = true                    # Perform preprocessing if true
-convert_object_to_categorical = true # Convert object columns to categorical
+preprocess = true # Perform preprocessing if true
 
 [preprocessing.label_encoder]
 # List of features to label encode
