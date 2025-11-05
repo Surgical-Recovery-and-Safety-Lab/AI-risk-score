@@ -15,7 +15,7 @@ import pyrisk
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Queries a duckdb to extract and save data"
+        description="Queries a duckdb to extract, preprocess, and save data"
     )
     parser.add_argument(
         "data_config_file",
@@ -72,12 +72,7 @@ if __name__ == "__main__":
             ),
             query,
         )
-    except (
-        TypeError,
-        ValueError,
-        IsADirectoryError,
-        FileNotFoundError,
-    ):
+    except (TypeError, ValueError, IsADirectoryError, FileNotFoundError):
         logger.exception(log_config["log_message"] + f"{script_name}")
         sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
         exit(1)
@@ -87,6 +82,33 @@ if __name__ == "__main__":
             log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
         )
         exit(1)
+
+    preprocessing_config = data_config["preprocessing"]
+
+    if preprocessing_config["preprocess"]:
+        # If the preprocess flag is true
+        print("[INFO] Preprocessing data")
+        try:
+            if preprocessing_config["convert_object_to_categorical"]:
+                df = pyrisk.data.preprocessing.convert_object_to_categorical(df)
+
+            if preprocessing_config["label_encoder"]["feature_list"] != []:
+                df = pyrisk.data.preprocessing.label_encode_data(
+                    df, preprocessing_config["label_encoder"]["feature_list"]
+                )
+
+        except (TypeError, ValueError, KeyError):
+            logger.exception(log_config["log_message"] + f"{script_name}")
+            sys.stderr.write(
+                log_config["print_message"] + f"{log_path}/{script_name}.log"
+            )
+            exit(1)
+        except Exception:
+            logger.exception(log_config["log_message"] + f"{script_name}")
+            sys.stderr.write(
+                log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+            )
+            exit(1)
 
     try:
         save_file = pyrisk.utils.config.get_file_path(data_config, path_type="io")
