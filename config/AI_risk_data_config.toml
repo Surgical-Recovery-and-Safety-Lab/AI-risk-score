@@ -35,3 +35,14 @@ feature_list = [
   "MORTALITY_30D",
   "ANY_COMP",
 ]
+label_list = [
+  "MORTALITY_30D",
+]
+
+[preprocessing]
+preprocess = true                    # Perform preprocessing if true
+convert_object_to_categorical = true # Convert object columns to categorical
+
+[preprocessing.label_encoder]
+# List of features to label encode
+feature_list = [ "DOMICILE_CODE" ]
