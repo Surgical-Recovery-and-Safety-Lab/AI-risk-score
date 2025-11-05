@@ -55,14 +55,8 @@ if __name__ == "__main__":
         pyrisk.data.db.parquet_to_duckdb(
             args.parquet_file, args.duckdb_file, args.table_name
         )
-    except (TypeError, ValueError, FileNotFoundError, IsADirectoryError):
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
-        exit(1)
-
     except Exception:
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
         )
         exit(1)
