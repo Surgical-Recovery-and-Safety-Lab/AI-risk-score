@@ -18,27 +18,10 @@ if __name__ == "__main__":
         description="Queries a duckdb to extract and save data"
     )
     parser.add_argument(
-        "duckdb_file",
-        metavar="duckdb-file",
-        help="Path to the .duckdb file",
+        "data_config_file",
+        metavar="data-config-file",
+        help="Path to the data config file",
     )
-    parser.add_argument(
-        "feature_list_file",
-        metavar="feature-list-file",
-        help="Path to the feature list file",
-    )
-    parser.add_argument(
-        "-t",
-        "--table-name",
-        default="main",
-        help="Name of the table to query in the database",
-    )
-    parser.add_argument(
-        "-s",
-        "--save-file",
-        help="Name of the file to save the extracted data",
-    )
-
     args = parser.parse_args()
 
     # Create logger
@@ -52,14 +35,20 @@ if __name__ == "__main__":
             script_name,
             log_path,
         )
-    except (TypeError, ValueError, FileNotFoundError, IsADirectoryError) as err:
+    except (
+        TypeError,
+        ValueError,
+        FileNotFoundError,
+        TOMLDecodeError,
+        IsADirectoryError,
+    ) as err:
         sys.stderr.write("An error occured when trying to create the logger")
         sys.stderr.write(repr(err))
         exit(1)
 
     try:
-        logger.info("Loading features")
-        feature_list = pyrisk.utils.io.read_toml_configuration(args.feature_list_file)
+        print("[INFO] Loading configuration")
+        data_config = pyrisk.utils.io.read_toml_configuration(args.data_config_file)
     except (
         TypeError,
         ValueError,
@@ -68,17 +57,21 @@ if __name__ == "__main__":
         FileNotFoundError,
     ):
         logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["logger.info_message"] + f"{log_path}/{script_name}.log"
-        )
+        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
         exit(1)
 
-    features = ",".join(feature_list["features"])
-    query = f"SELECT {features} FROM {args.table_name};"
+    features = ",".join(data_config["features"]["feature_list"])
+    db_parameters = data_config["db_parameters"]
+    query = f"SELECT {features} FROM {db_parameters["table_name"]};"
 
     try:
-        logger.info("Extracting data")
-        df = pyrisk.data.db.extract_data_from_duckdb(args.duckdb_file, query)
+        print("[INFO] Extracting data")
+        df = pyrisk.data.db.extract_data_from_duckdb(
+            pyrisk.utils.config.get_file_path(
+                data_config, path_type="db", version=False
+            ),
+            query,
+        )
     except (
         TypeError,
         ValueError,
@@ -86,9 +79,7 @@ if __name__ == "__main__":
         FileNotFoundError,
     ):
         logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["logger.info_message"] + f"{log_path}/{script_name}.log"
-        )
+        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
         exit(1)
     except Exception:
         logger.exception(log_config["log_message"] + f"{script_name}")
@@ -97,20 +88,13 @@ if __name__ == "__main__":
         )
         exit(1)
 
-    if args.save_file:
-        try:
-            pyrisk.utils.exceptions.file_checks(args.save_file, ".csv")
-        except (
-            TypeError,
-            ValueError,
-            IsADirectoryError,
-            FileNotFoundError,
-        ):
-            logger.exception(log_config["log_message"] + f"{script_name}")
-            sys.stderr.write(
-                log_config["logger.info_message"] + f"{log_path}/{script_name}.log"
-            )
-            exit(1)
-
-        logger.info("Saving data")
-        df.to_csv(args.save_file)
+    try:
+        save_file = pyrisk.utils.config.get_file_path(data_config, path_type="io")
+        print("[INFO] Saving data")
+        df.to_csv(save_file)
+    except Exception:
+        logger.exception(log_config["log_message"] + f"{script_name}")
+        sys.stderr.write(
+            log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+        )
+        exit(1)
