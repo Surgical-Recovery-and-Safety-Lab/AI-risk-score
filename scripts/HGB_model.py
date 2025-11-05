@@ -9,7 +9,6 @@ Histogram Gradient Boosting model creation and training script.
 import argparse
 import pathlib
 import sys
-from tomllib import TOMLDecodeError
 
 import pyrisk
 
@@ -44,46 +43,24 @@ if __name__ == "__main__":
     try:
         print("[INFO] Loading parameters from configuration file")
         model_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
-    except (
-        TypeError,
-        ValueError,
-        IsADirectoryError,
-        TOMLDecodeError,
-        FileNotFoundError,
-    ):
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
-        exit(1)
-
-    try:
-        print("[INFO] Creating model")
-        model = pyrisk.models.core.create_model(
-            "hgb", **model_config["config_parameters"]
-        )
-    except (TypeError, ValueError, KeyError):
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
-        exit(1)
     except Exception:
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
         )
         exit(1)
 
+    # Data loading and manipulation
     try:
-        print("[INFO] Getting training data")
+        print("[INFO] Getting data")
         data_config_path = pyrisk.utils.config.get_file_path(
             model_config, path_type="data", version=False
         )
         data_config = pyrisk.utils.io.read_toml_configuration(data_config_path)
         data = pyrisk.utils.io.load_data_from_csv(
-            pyrisk.utils.config.get_file_path(
-                data_config, suffix=data_config["io_parameters"]["train_suffix"]
-            )
+            pyrisk.utils.config.get_file_path(data_config)
         )
 
-        # Convert objects to categoricals
+        # Convert objects to categorical (not saved so needs to be here)
         data = pyrisk.data.preprocessing.convert_object_to_categorical(data)
 
         print("[INFO] Splitting data")
@@ -100,33 +77,29 @@ if __name__ == "__main__":
             test_data, data_config["features"]["label_list"]
         )
 
-    except (
-        TypeError,
-        ValueError,
-        KeyError,
-        IsADirectoryError,
-        TOMLDecodeError,
-        FileNotFoundError,
-    ):
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(log_config["print_message"] + f"{log_path}/{script_name}.log")
-        exit(1)
     except Exception:
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
         )
         exit(1)
 
+    # Model creation, training, and testing
     try:
+        print("[INFO] Creating model")
+        model = pyrisk.models.core.create_model(
+            "hgb", **model_config["config_parameters"]
+        )
+
         print("[INFO] Training model")
-        model.fit(X, y)
+        pyrisk.models.core.train_model(model, X_train, y_train.ravel())
+
+        print("[INFO] Testing model")
+        score = pyrisk.models.core.test_model(model, X_test, y_test)
+
+        print(f"\nModel score: {score}")
 
     except Exception:
-        logger.exception(log_config["log_message"] + f"{script_name}")
-        sys.stderr.write(
-            log_config["unexpected_message"] + f"{log_path}/{script_name}.log"
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
         )
         exit(1)
-
-    breakpoint()
