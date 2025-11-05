@@ -86,9 +86,18 @@ if __name__ == "__main__":
         # Convert objects to categoricals
         data = pyrisk.data.preprocessing.convert_object_to_categorical(data)
 
+        print("[INFO] Splitting data")
+        split_vars = data_config["split_variables"]
+        train_data, test_data = pyrisk.data.preprocessing.split_test_train(
+            data, split_vars["train_split"], split_vars["random_state"]
+        )
+
         # Get prediction labels from data
-        X, y = pyrisk.data.preprocessing.extract_labels(
-            data, data_config["features"]["label_list"]
+        X_train, y_train = pyrisk.data.preprocessing.extract_labels(
+            train_data, data_config["features"]["label_list"]
+        )
+        X_test, y_test = pyrisk.data.preprocessing.extract_labels(
+            test_data, data_config["features"]["label_list"]
         )
 
     except (
