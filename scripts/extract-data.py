@@ -91,7 +91,7 @@ if __name__ == "__main__":
     try:
         save_file = pyrisk.utils.config.get_file_path(data_config, path_type="io")
         print("[INFO] Saving data")
-        df.to_csv(save_file)
+        df.to_csv(save_file, index=False)
     except Exception:
         logger.exception(log_config["log_message"] + f"{script_name}")
         sys.stderr.write(
