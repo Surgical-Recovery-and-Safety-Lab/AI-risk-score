@@ -1,0 +1,10 @@
+[io_parameters]
+dir = "/home/mroe734/Documents/srs/AI-risk-score/data/processed/"
+name = "ai_risk_data-"
+extension = ".csv"
+
+[db_parameters]
+dir = "/home/mroe734/Documents/srs/AI-risk-score/data/raw/"
+name = "nz_hospital_db"
+table_name = "main"
+extension = ".duckdb"

@@ -1,0 +1,6 @@
+[preprocessing]
+preprocess = true # Perform preprocessing if true
+
+[preprocessing.label_encoder]
+# List of features to label encode
+feature_list = [ "DOMICILE_CODE" ]
