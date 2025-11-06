@@ -10,6 +10,7 @@ import argparse
 import pathlib
 import sys
 
+import pandas as pd
 import pyrisk
 
 if __name__ == "__main__":
@@ -96,9 +97,12 @@ if __name__ == "__main__":
         pyrisk.models.core.train_model(model, X_train, y_train.ravel())
 
         print("[INFO] Testing model")
-        score = pyrisk.models.core.test_model(model, X_test, y_test)
-
-        print(f"\nModel score: {score}")
+        y_pred = model.predict(X_test)
+        pyrisk.metrics.plots.plot_from_display(y_test, y_pred, "roc")
+        pyrisk.metrics.plots.plot_from_display(y_test, y_pred, "confusion")
+        pyrisk.metrics.plots.plot_from_display(
+            pd.DataFrame(y_test), y_pred, "precision-recall"
+        )
 
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
