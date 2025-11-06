@@ -1,6 +1,6 @@
 # Ignore data folder
 data/
-
+!config/data
 # Ignore generated figures
 figures/
 
