@@ -48,7 +48,13 @@ if __name__ == "__main__":
 
     try:
         print("[INFO] Loading configuration")
-        data_config = pyrisk.utils.io.read_toml_configuration(args.data_config_file)
+        data_config_top_level = pyrisk.utils.io.read_toml_configuration(
+            args.data_config_file
+        )
+        data_config = pyrisk.utils.config.get_data_configuration(
+            data_config_top_level["data_parameters"],
+            data_config_top_level["version"],
+        )
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
             logger, log_path, log_config, script_name
@@ -62,9 +68,7 @@ if __name__ == "__main__":
     try:
         print("[INFO] Extracting data")
         df = pyrisk.data.db.extract_data_from_duckdb(
-            pyrisk.utils.config.get_file_path(
-                data_config, path_type="db", version=False
-            ),
+            pyrisk.utils.config.get_file_path(data_config, path_type="db"),
             query,
         )
     except Exception:
@@ -89,10 +93,12 @@ if __name__ == "__main__":
                 logger, log_path, log_config, script_name
             )
             exit(1)
-        breakpoint()
+
     try:
         print("[INFO] Saving data")
-        save_file = pyrisk.utils.config.get_file_path(data_config, path_type="io")
+        save_file = pyrisk.utils.config.get_file_path(
+            data_config, v_number=data_config_top_level["version"], exists=False
+        )
         df.to_csv(save_file, index=False)
     except Exception:
         pyrisk.utils.exceptions.exception_handler(

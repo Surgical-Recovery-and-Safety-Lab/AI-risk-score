@@ -52,12 +52,14 @@ if __name__ == "__main__":
     # Data loading and manipulation
     try:
         print("[INFO] Getting data")
-        data_config_path = pyrisk.utils.config.get_file_path(
-            model_config, path_type="data", version=False
+        data_config = pyrisk.utils.config.get_data_configuration(
+            model_config["data_parameters"],
+            model_config["version"],
         )
-        data_config = pyrisk.utils.io.read_toml_configuration(data_config_path)
         data = pyrisk.utils.io.load_data_from_csv(
-            pyrisk.utils.config.get_file_path(data_config)
+            pyrisk.utils.config.get_file_path(
+                data_config, v_number=model_config["version"]
+            )
         )
 
         # Convert objects to categorical (not saved so needs to be here)
@@ -71,10 +73,10 @@ if __name__ == "__main__":
 
         # Get prediction labels from data
         X_train, y_train = pyrisk.data.preprocessing.extract_labels(
-            train_data, data_config["features"]["label_list"]
+            train_data, model_config["labels"]["label_list"]
         )
         X_test, y_test = pyrisk.data.preprocessing.extract_labels(
-            test_data, data_config["features"]["label_list"]
+            test_data, model_config["labels"]["label_list"]
         )
 
     except Exception:
