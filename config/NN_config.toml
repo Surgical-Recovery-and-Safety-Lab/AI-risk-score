@@ -1,5 +1,10 @@
 version = "v0.1.1-a1"
 
+[model_parameters]
+dir = "/home/mroe734/Documents/srs/AI-risk-score/config/NN/"
+name = "ai_risk_NN-"
+extension = ".toml"
+
 [io_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/models/"
 name = "ai_risk_NN-"
