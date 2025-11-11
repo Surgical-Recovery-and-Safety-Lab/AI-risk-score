@@ -92,8 +92,8 @@ if __name__ == "__main__":
         exit(1)
 
     # Model creation, training, and testing
-    if not args.load:
-        try:
+    try:
+        if not args.load:
             print("[INFO] Creating model")
             model = pyrisk.models.core.create_model(
                 "hgb", **model_config["config_parameters"]
@@ -110,14 +110,7 @@ if __name__ == "__main__":
             )
             pyrisk.models.core.save_model(model, save_file)
 
-        except Exception:
-            pyrisk.utils.exceptions.exception_handler(
-                logger, log_path, log_config, script_name
-            )
-            exit(1)
-
-    else:
-        try:
+        else:
             print("[INFO] Loading model")
             load_file = pyrisk.utils.config.get_file_path(
                 model_config,
@@ -125,11 +118,12 @@ if __name__ == "__main__":
             )
 
             model = pyrisk.models.core.load_model(load_file)
-        except Exception:
-            pyrisk.utils.exceptions.exception_handler(
-                logger, log_path, log_config, script_name
-            )
-            exit(1)
+
+    except Exception:
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
+        )
+        exit(1)
 
     try:
         print("[INFO] Testing model")

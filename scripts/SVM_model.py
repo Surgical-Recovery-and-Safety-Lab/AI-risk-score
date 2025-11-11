@@ -22,6 +22,7 @@ if __name__ == "__main__":
         metavar="model-config-file",
         help="Path to the model configuration file",
     )
+    parser.add_argument("--load", "-l", action="store_true", help="Loading flag")
 
     args = parser.parse_args()
 
@@ -98,14 +99,39 @@ if __name__ == "__main__":
 
     # Model creation, training, and testing
     try:
-        print("[INFO] Creating model")
-        model = pyrisk.models.core.create_model(
-            "svm", **model_config["config_parameters"]
+        if not args.load:
+            print("[INFO] Creating model")
+            model = pyrisk.models.core.create_model(
+                "svm", **model_config["config_parameters"]
+            )
+
+            print("[INFO] Training model")
+            pyrisk.models.core.train_model(model, X_train, y_train.ravel())
+
+            print("[INFO] Saving model")
+            save_file = pyrisk.utils.config.get_file_path(
+                model_config,
+                v_number=model_config["version"],
+                exists=False,
+            )
+            pyrisk.models.core.save_model(model, save_file)
+
+        else:
+            print("[INFO] Loading model")
+            load_file = pyrisk.utils.config.get_file_path(
+                model_config,
+                v_number=model_config["version"],
+            )
+
+            model = pyrisk.models.core.load_model(load_file)
+
+    except Exception:
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
         )
+        exit(1)
 
-        print("[INFO] Training model")
-        pyrisk.models.core.train_model(model, X_train, y_train.ravel())
-
+    try:
         print("[INFO] Testing model")
         y_pred = model.predict(X_test)
         pyrisk.metrics.plots.plot_from_display(y_test, y_pred, "roc")

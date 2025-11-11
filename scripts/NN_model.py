@@ -20,6 +20,7 @@ if __name__ == "__main__":
         metavar="model-config-file",
         help="Path to the model configuration file",
     )
+    parser.add_argument("--load", "-l", action="store_true", help="Loading flag")
 
     args = parser.parse_args()
 
@@ -100,10 +101,35 @@ if __name__ == "__main__":
         model = pyrisk.models.core.create_model(
             "nn", n_features=X_train.shape[1], **model_config["config_parameters"]
         )
-        breakpoint()
-        print("[INFO] Training model")
-        pyrisk.models.core.train_model(model, X_train, y_train.ravel())
 
+        if not args.load:
+            print("[INFO] Training model")
+            pyrisk.models.core.train_model(model, X_train, y_train.ravel())
+
+            print("[INFO] Saving model")
+            save_file = pyrisk.utils.config.get_file_path(
+                model_config,
+                v_number=model_config["version"],
+                exists=False,
+            )
+            model.save_model()
+
+        else:
+            print("[INFO] Loading model weights")
+            model.load_model(
+                pyrisk.utils.config.get_file_path(
+                    model_config,
+                    v_number=model_config["version"],
+                )
+            )
+
+    except Exception:
+        pyrisk.utils.exceptions.exception_handler(
+            logger, log_path, log_config, script_name
+        )
+        exit(1)
+
+    try:
         print("[INFO] Testing model")
         y_pred = model.predict(X_test)
         pyrisk.metrics.plots.plot_from_display(y_test, y_pred, "roc")
