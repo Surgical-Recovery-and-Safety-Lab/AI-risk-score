@@ -5,7 +5,7 @@ version = "v0.1.1"
 [io_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/models/"
 name = "NN_"
-extension = ".pkl"
+extension = ".pt"
 
 [data_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/config/data/"
