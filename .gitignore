@@ -1,8 +1,12 @@
 # Ignore data folder
 data/
 !config/data
+
 # Ignore generated figures
 figures/
 
 # Ignore logs
 logs/
+
+# Ignore models
+models/
