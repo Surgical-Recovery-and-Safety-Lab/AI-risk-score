@@ -27,6 +27,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
+        print("[INFO] Setting up logger")
         # Read log configuration file
         log_config = pyrisk.utils.io.read_toml_configuration("../config/log.toml")
 
