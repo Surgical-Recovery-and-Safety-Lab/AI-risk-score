@@ -70,6 +70,10 @@ if __name__ == "__main__":
 
         print(f"[INFO] Dropped {nb_nan_rows} rows with NaN values")
 
+        data_true = data.loc[data[model_config["labels"]["label_list"][0]] == True]
+        data_false = data.loc[data[model_config["labels"]["label_list"][0]] == False]
+        data = pd.concat([data_true, data_false[: len(data_true)]])
+
         print("[INFO] Splitting data")
         split_vars = data_config["split_variables"]
         train_data, test_data = pyrisk.data.preprocessing.split_test_train(
@@ -96,7 +100,7 @@ if __name__ == "__main__":
         model = pyrisk.models.core.create_model(
             "nn", n_features=X_train.shape[1], **model_config["config_parameters"]
         )
-
+        breakpoint()
         print("[INFO] Training model")
         pyrisk.models.core.train_model(model, X_train, y_train.ravel())
 

@@ -67,6 +67,10 @@ if __name__ == "__main__":
         # Convert objects to categorical (not saved so needs to be here)
         data = pyrisk.data.preprocessing.convert_object_to_categorical(data)
 
+        data_true = data.loc[data[model_config["labels"]["label_list"][0]] == True]
+        data_false = data.loc[data[model_config["labels"]["label_list"][0]] == False]
+        data = pd.concat([data_true, data_false[: len(data_true)]])
+
         print("[INFO] Splitting data")
         split_vars = data_config["split_variables"]
         train_data, test_data = pyrisk.data.preprocessing.split_test_train(
