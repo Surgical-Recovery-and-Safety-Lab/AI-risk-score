@@ -1,0 +1,5 @@
+[config_parameters]
+penalty = "l2"
+loss = "squared_hinge"
+C = 1.0
+class_weight = "balanced"

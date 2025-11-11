@@ -1,21 +1,16 @@
-version = "v0.1.1"
+version = "v0.1.1-a1"
 
-[config_parameters]
-learning_rate = 0.1
-loss = "log_loss"
-l2_regularization = 0.5
-max_features = 0.2
-class_weight = "balanced"
+[model_parameters]
+dir = "/home/mroe734/Documents/srs/AI-risk-score/config/HGB/"
+name = "ai_risk_HGB-"
+extension = ".toml"
 
 [io_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/models/"
-name = "HGB_"
+name = "ai_risk_HGB-"
 extension = ".pkl"
 
 [data_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/config/data/"
 name = "ai_risk_data-"
 extension = ".toml"
-
-[labels]
-label_list = [ "MORTALITY_30D" ]

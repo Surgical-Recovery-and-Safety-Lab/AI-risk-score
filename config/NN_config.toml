@@ -1,20 +1,11 @@
-version = "v0.1.1"
-
-[config_parameters]
-penalty = "l2"
-loss = "squared_hinge"
-C = 1.0
-class_weight = "balanced"
+version = "v0.1.1-a1"
 
 [io_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/models/"
-name = "SVM_"
-extension = ".pkl"
+name = "ai_risk_NN-"
+extension = ".pt"
 
 [data_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/config/data/"
 name = "ai_risk_data-"
 extension = ".toml"
-
-[labels]
-label_list = [ "MORTALITY_30D" ]

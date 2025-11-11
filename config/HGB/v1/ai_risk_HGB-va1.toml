@@ -1,0 +1,6 @@
+[config_parameters]
+learning_rate = 0.1
+loss = "log_loss"
+l2_regularization = 0.5
+max_features = 0.2
+class_weight = "balanced"
