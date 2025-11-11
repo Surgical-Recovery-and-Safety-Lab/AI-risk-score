@@ -44,7 +44,25 @@ if __name__ == "__main__":
 
     try:
         print("[INFO] Loading parameters from configuration file")
-        model_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
+        general_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
+
+        data_version, model_version = pyrisk.utils.config.split_version_number(
+            general_config["version"]
+        )
+
+        # Get model configuration parameters
+        model_config = pyrisk.utils.config.get_configuration(
+            general_config["model_parameters"],
+            model_version,
+            join_token="",
+        )
+
+        # Get data configuration parameters
+        data_config = pyrisk.utils.config.get_configuration(
+            general_config["data_parameters"],
+            data_version,
+        )
+
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
             logger, log_path, log_config, script_name
@@ -54,14 +72,8 @@ if __name__ == "__main__":
     # Data loading and manipulation
     try:
         print("[INFO] Getting data")
-        data_config = pyrisk.utils.config.get_data_configuration(
-            model_config["data_parameters"],
-            model_config["version"],
-        )
         data = pyrisk.utils.io.load_data_from_csv(
-            pyrisk.utils.config.get_file_path(
-                data_config, v_number=model_config["version"]
-            )
+            pyrisk.utils.config.get_file_path(data_config, v_number=data_version)
         )
 
         # Convert objects to categorical (not saved so needs to be here)
@@ -110,8 +122,8 @@ if __name__ == "__main__":
 
             print("[INFO] Saving model")
             save_file = pyrisk.utils.config.get_file_path(
-                model_config,
-                v_number=model_config["version"],
+                general_config,
+                v_number=general_config["version"],
                 exists=False,
             )
             pyrisk.models.core.save_model(model, save_file)
@@ -119,8 +131,8 @@ if __name__ == "__main__":
         else:
             print("[INFO] Loading model")
             load_file = pyrisk.utils.config.get_file_path(
-                model_config,
-                v_number=model_config["version"],
+                general_config,
+                v_number=general_config["version"],
             )
 
             model = pyrisk.models.core.load_model(load_file)
