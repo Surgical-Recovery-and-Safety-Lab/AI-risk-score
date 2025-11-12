@@ -25,6 +25,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
+        print("[INFO] Setting up logger")
         # Read log configuration file
         log_config = pyrisk.utils.io.read_toml_configuration("../config/log.toml")
 
@@ -42,7 +43,25 @@ if __name__ == "__main__":
 
     try:
         print("[INFO] Loading parameters from configuration file")
-        model_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
+        general_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
+
+        data_version, model_version = pyrisk.utils.config.split_version_number(
+            general_config["version"]
+        )
+
+        # Get model configuration parameters
+        model_config = pyrisk.utils.config.get_configuration(
+            general_config["model_parameters"],
+            model_version,
+            join_token="",
+        )
+
+        # Get data configuration parameters
+        data_config = pyrisk.utils.config.get_configuration(
+            general_config["data_parameters"],
+            data_version,
+        )
+
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
             logger, log_path, log_config, script_name
@@ -52,14 +71,8 @@ if __name__ == "__main__":
     # Data loading and manipulation
     try:
         print("[INFO] Getting data")
-        data_config = pyrisk.utils.config.get_data_configuration(
-            model_config["data_parameters"],
-            model_config["version"],
-        )
         data = pyrisk.utils.io.load_data_from_csv(
-            pyrisk.utils.config.get_file_path(
-                data_config, v_number=model_config["version"]
-            )
+            pyrisk.utils.config.get_file_path(data_config, v_number=data_version)
         )
 
         # Convert objects to categorical (not saved so needs to be here)
@@ -99,27 +112,29 @@ if __name__ == "__main__":
     try:
         print("[INFO] Creating model")
         model = pyrisk.models.core.create_model(
-            "nn", n_features=X_train.shape[1], **model_config["config_parameters"]
+            "nn", n_features=X_train.shape[1], **model_config["architecture"]
         )
 
         if not args.load:
             print("[INFO] Training model")
-            pyrisk.models.core.train_model(model, X_train, y_train.ravel())
+            pyrisk.models.core.train_model(
+                model, X_train, y_train.ravel(), **model_config["hyperparameters"]
+            )
 
             print("[INFO] Saving model")
             save_file = pyrisk.utils.config.get_file_path(
-                model_config,
-                v_number=model_config["version"],
+                general_config,
+                v_number=general_config["version"],
                 exists=False,
             )
-            model.save_model()
+            pyrisk.models.core.save_model(model, save_file, extension=".pt")
 
         else:
             print("[INFO] Loading model weights")
             model.load_model(
                 pyrisk.utils.config.get_file_path(
-                    model_config,
-                    v_number=model_config["version"],
+                    general_config,
+                    v_number=general_config["version"],
                 )
             )
 
