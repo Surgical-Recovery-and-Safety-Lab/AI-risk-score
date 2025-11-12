@@ -1,1 +1,64 @@
-[config_parameters]
+loss_fn = "BCEWithLogitsLoss"
+optimiser = "Adam"
+
+[hyperparameters]
+epochs = 50
+batch_size = 64
+lr = 0.001
+
+## Note in_features are automatically identified during model creation
+
+[architecture]
+[[architecture.layers]]
+type = "Linear"
+out_features = 50
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "ReLU"
+
+[[architecture.layers]]
+type = "Linear"
+out_features = 50
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "ReLU"
+
+[[architecture.layers]]
+type = "Linear"
+out_features = 25
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "ReLU"
+
+[[architecture.layers]]
+type = "Linear"
+out_features = 25
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "ReLU"
+
+[[architecture.layers]]
+type = "Linear"
+out_features = 10
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "ReLU"
+
+[[architecture.layers]]
+type = "Linear"
+out_features = 1
