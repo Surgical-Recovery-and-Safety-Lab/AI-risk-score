@@ -1,4 +1,4 @@
-version = "v0.1.1"
+version = "v0.2.1"
 
 [data_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/config/data/"
