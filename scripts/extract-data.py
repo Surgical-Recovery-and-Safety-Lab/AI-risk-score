@@ -26,6 +26,7 @@ if __name__ == "__main__":
 
     # Create logger
     try:
+        print("[INFO] Setting up logger")
         # Read log configuration file
         log_config = pyrisk.utils.io.read_toml_configuration("../config/log.toml")
 
@@ -51,7 +52,7 @@ if __name__ == "__main__":
         data_config_top_level = pyrisk.utils.io.read_toml_configuration(
             args.data_config_file
         )
-        data_config = pyrisk.utils.config.get_data_configuration(
+        data_config = pyrisk.utils.config.get_configuration(
             data_config_top_level["data_parameters"],
             data_config_top_level["version"],
         )
