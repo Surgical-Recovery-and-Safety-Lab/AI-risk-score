@@ -1,0 +1,15 @@
+[preprocessing]
+preprocess = true # Perform preprocessing if true
+
+[preprocessing.label_encoder]
+# List of features to label encode
+feature_list = [
+  "SEX_ORIGINAL",
+  "GCH2018_ORIGINAL",
+  "FACILITY",
+  "ETHNICITY_ORIGINAL",
+  "ADMISSION_ACUITY",
+  "ADMISSION_SOURCE",
+  "CATEGORY_LEVEL_1",
+  "CATEGORY_LEVEL_2",
+]
