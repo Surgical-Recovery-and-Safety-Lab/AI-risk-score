@@ -1,10 +1,12 @@
+base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
+
 [io_parameters]
-dir = "/home/mroe734/Documents/srs/AI-risk-score/data/processed/"
+dir = "data/processed/"
 name = "ai_risk_data-"
 extension = ".csv"
 
 [db_parameters]
-dir = "/home/mroe734/Documents/srs/AI-risk-score/data/raw/"
+dir = "data/raw/"
 name = "nz_hospital_db"
 table_name = "main"
 extension = ".duckdb"

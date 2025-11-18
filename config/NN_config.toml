@@ -1,16 +1,17 @@
 version = "v0.1.1-a1"
+base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [model_parameters]
-dir = "/home/mroe734/Documents/srs/AI-risk-score/config/NN/"
+dir = "config/NN/"
 name = "ai_risk_NN-"
 extension = ".toml"
 
 [io_parameters]
-dir = "/home/mroe734/Documents/srs/AI-risk-score/models/"
+dir = "models/"
 name = "ai_risk_NN-"
 extension = ".pt"
 
 [data_parameters]
-dir = "/home/mroe734/Documents/srs/AI-risk-score/config/data/"
+dir = "config/data/"
 name = "ai_risk_data-"
 extension = ".toml"
