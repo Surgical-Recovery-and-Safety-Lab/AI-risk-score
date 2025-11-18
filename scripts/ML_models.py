@@ -33,10 +33,11 @@ if __name__ == "__main__":
 
         # Create logger
         script_name = str(pathlib.Path(__file__).stem)
-        log_path = log_config["log_path"]
+        log_dir = log_config["base_dir"] + log_config["log_dir"]
+        log_dir = log_config["log_dir"]
         logger = pyrisk.utils.logger.setup_logger(
             script_name,
-            log_path,
+            log_dir,
         )
     except (TypeError, ValueError, FileNotFoundError, IsADirectoryError) as err:
         sys.stderr.write("An error occured when trying to create the logger")
@@ -65,7 +66,7 @@ if __name__ == "__main__":
         )
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
-            logger, log_path, log_config, script_name
+            logger, log_dir, log_config, script_name
         )
         exit(1)
 
@@ -125,7 +126,7 @@ if __name__ == "__main__":
 
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
-            logger, log_path, log_config, script_name
+            logger, log_dir, log_config, script_name
         )
         exit(1)
 
@@ -140,6 +141,6 @@ if __name__ == "__main__":
 
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
-            logger, log_path, log_config, script_name
+            logger, log_dir, log_config, script_name
         )
         exit(1)

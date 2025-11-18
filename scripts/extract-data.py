@@ -31,10 +31,10 @@ if __name__ == "__main__":
         log_config = pyrisk.utils.io.read_toml_configuration("../config/log.toml")
 
         script_name = str(pathlib.Path(__file__).stem)
-        log_path = log_config["log_path"]
+        log_dir = log_config["log_dir"]
         logger = pyrisk.utils.logger.setup_logger(
             script_name,
-            log_path,
+            log_dir,
         )
     except (
         TypeError,
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         )
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
-            logger, log_path, log_config, script_name
+            logger, log_dir, log_config, script_name
         )
         exit(1)
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         )
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
-            logger, log_path, log_config, script_name
+            logger, log_dir, log_config, script_name
         )
         exit(1)
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
         except Exception:
             pyrisk.utils.exceptions.exception_handler(
-                logger, log_path, log_config, script_name
+                logger, log_dir, log_config, script_name
             )
             exit(1)
 
@@ -103,6 +103,6 @@ if __name__ == "__main__":
         df.to_csv(save_file, index=False)
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
-            logger, log_path, log_config, script_name
+            logger, log_dir, log_config, script_name
         )
         exit(1)
