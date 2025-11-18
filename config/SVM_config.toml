@@ -1,4 +1,5 @@
 version = "v0.1.1-a1"
+model_type = "svm"
 
 [model_parameters]
 dir = "/home/mroe734/Documents/srs/AI-risk-score/config/SVM/"
