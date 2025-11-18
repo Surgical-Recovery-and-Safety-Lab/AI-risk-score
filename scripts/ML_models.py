@@ -135,6 +135,9 @@ if __name__ == "__main__":
         ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
         pyrisk.metrics.core.print_metrics_CI(ci_dict)
 
+        pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics)
+        pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics)
+
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
             logger, log_path, log_config, script_name
