@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SVM-model.py
+HGB-model.py
 
-Support Vector Maching model creation and training script.
+Histogram Gradient Boosting model creation and training script.
 """
 
 import argparse
@@ -15,7 +15,7 @@ import pyrisk
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a Support Vector Machine model"
+        description="Create and train a machine learning model"
     )
     parser.add_argument(
         "model_config_file",
@@ -63,63 +63,47 @@ if __name__ == "__main__":
             general_config["data_parameters"],
             data_version,
         )
-
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
             logger, log_path, log_config, script_name
         )
         exit(1)
 
-    # Data loading and manipulation
-    try:
-        print("[INFO] Getting data")
-        data = pyrisk.utils.io.load_data_from_csv(
-            pyrisk.utils.config.get_file_path(data_config, v_number=data_version)
-        )
-
-        # Convert objects to categorical (not saved so needs to be here)
-        data = pyrisk.data.preprocessing.convert_object_to_categorical(data)
-
-        # Remove NaN values
-        nb_nan_rows = data.isna().any(axis=1).sum()
-        data = data.dropna()
-
-        print(f"[INFO] Dropped {nb_nan_rows} rows with NaN values")
-
-        data_true = data.loc[data[model_config["labels"]["label_list"][0]] == True]
-        data_false = data.loc[data[model_config["labels"]["label_list"][0]] == False]
-        data = pd.concat([data_true, data_false[: len(data_true)]])
-
-        print("[INFO] Splitting data")
-        split_vars = data_config["split_variables"]
-        train_data, test_data = pyrisk.data.preprocessing.split_test_train(
-            data, split_vars["train_split"], split_vars["random_state"]
-        )
-
-        # Get prediction labels from data
-        X_train, y_train = pyrisk.data.preprocessing.extract_labels(
-            train_data, model_config["labels"]["label_list"]
-        )
-        X_test, y_test = pyrisk.data.preprocessing.extract_labels(
-            test_data, model_config["labels"]["label_list"]
-        )
-
-    except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_path, log_config, script_name
-        )
-        exit(1)
-
-    # Model creation, training, and testing
     try:
         if not args.load:
+            print("[INFO] Getting data")
+            data = pyrisk.utils.io.load_data_from_csv(
+                pyrisk.utils.config.get_file_path(data_config, v_number=data_version)
+            )
+            # Convert objects to categorical (not saved so needs to be here)
+            data = pyrisk.data.preprocessing.convert_object_to_categorical(data)
+
+            # Remove NaN values
+            nb_nan_rows = data.isna().any(axis=1).sum()
+            data = data.dropna()
+
+            print(f"[INFO] Dropped {nb_nan_rows} rows with NaN values")
+
+            # Split data
+            print("[INFO] Splitting data")
+            split_vars = data_config["split_variables"]
+
+            kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
+
+            ## MODEL CREATION AND TRAINING
             print("[INFO] Creating model")
             model = pyrisk.models.core.create_model(
-                "svm", **model_config["config_parameters"]
+                general_config["model_type"], **model_config["config_parameters"]
             )
 
             print("[INFO] Training model")
-            pyrisk.models.core.train_model(model, X_train, y_train.ravel())
+            model_metrics = pyrisk.models.core.train_model(
+                model,
+                data,
+                kfold_it,
+                model_config["labels"]["label_list"],
+                split_vars["group_name"],
+            )
 
             print("[INFO] Saving model")
             save_file = pyrisk.utils.config.get_file_path(
@@ -127,16 +111,17 @@ if __name__ == "__main__":
                 v_number=general_config["version"],
                 exists=False,
             )
-            pyrisk.models.core.save_model(model, save_file)
+            pyrisk.models.core.save_model(model, save_file, model_metrics)
 
         else:
+            # Load model
             print("[INFO] Loading model")
             load_file = pyrisk.utils.config.get_file_path(
                 general_config,
                 v_number=general_config["version"],
             )
 
-            model = pyrisk.models.core.load_model(load_file)
+            model, model_metrics = pyrisk.models.core.load_model(load_file)
 
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
@@ -144,14 +129,11 @@ if __name__ == "__main__":
         )
         exit(1)
 
+    # Compute statistics
     try:
-        print("[INFO] Testing model")
-        y_pred = model.predict(X_test)
-        pyrisk.metrics.plots.plot_from_display(y_test, y_pred, "roc")
-        pyrisk.metrics.plots.plot_from_display(y_test, y_pred, "confusion")
-        pyrisk.metrics.plots.plot_from_display(
-            pd.DataFrame(y_test), y_pred, "precision-recall"
-        )
+        print("[INFO] Computing model statistics")
+        ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
+        pyrisk.metrics.core.print_metrics_CI(ci_dict)
 
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
