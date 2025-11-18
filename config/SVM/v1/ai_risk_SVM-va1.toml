@@ -1,5 +1,5 @@
 [config_parameters]
-penalty = "l2"
-loss = "squared_hinge"
+kernel = "linear"
+probability = true
 C = 1.0
 class_weight = "balanced"
