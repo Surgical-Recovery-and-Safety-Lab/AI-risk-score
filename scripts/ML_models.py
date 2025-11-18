@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-HGB-model.py
+ML-models.py
 
-Histogram Gradient Boosting model creation and training script.
+Machine learning model creation and training script.
 """
 
 import argparse
