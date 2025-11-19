@@ -1,4 +1,5 @@
 version = "v0.1.1-a1"
+model_type = "nn"
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [model_parameters]
@@ -9,7 +10,7 @@ extension = ".toml"
 [io_parameters]
 dir = "models/"
 name = "ai_risk_NN-"
-extension = ".pt"
+extension = ".pkl"
 
 [data_parameters]
 dir = "config/data/"
