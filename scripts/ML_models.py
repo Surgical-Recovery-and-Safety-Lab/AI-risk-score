@@ -10,7 +10,6 @@ import argparse
 import pathlib
 import sys
 
-import pandas as pd
 import pyrisk
 
 if __name__ == "__main__":
@@ -48,6 +47,7 @@ if __name__ == "__main__":
         print("[INFO] Loading parameters from configuration file")
         general_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
 
+        model_type = general_config["model_type"]
         data_version, model_version = pyrisk.utils.config.split_version_number(
             general_config["version"]
         )
@@ -93,18 +93,36 @@ if __name__ == "__main__":
 
             ## MODEL CREATION AND TRAINING
             print("[INFO] Creating model")
-            model = pyrisk.models.core.create_model(
-                general_config["model_type"], **model_config["config_parameters"]
-            )
+            if model_type == "nn":
+                model = pyrisk.models.core.create_model(
+                    model_type,
+                    n_features=14,
+                    **model_config["architecture"],
+                )
+            else:
+                model = pyrisk.models.core.create_model(
+                    model_type, **model_config["config_parameters"]
+                )
 
             print("[INFO] Training model")
-            model_metrics = pyrisk.models.core.train_model(
-                model,
-                data,
-                kfold_it,
-                model_config["labels"]["label_list"],
-                split_vars["group_name"],
-            )
+            if model_type == "nn":
+                model_metrics = pyrisk.models.core.train_model(
+                    model,
+                    data,
+                    kfold_it,
+                    model_config["labels"]["label_list"],
+                    split_vars["group_name"],
+                    **model_config["hyperparameters"],
+                )
+
+            else:
+                model_metrics = pyrisk.models.core.train_model(
+                    model,
+                    data,
+                    kfold_it,
+                    model_config["labels"]["label_list"],
+                    split_vars["group_name"],
+                )
 
             print("[INFO] Saving model")
             save_file = pyrisk.utils.config.get_file_path(
@@ -112,7 +130,13 @@ if __name__ == "__main__":
                 v_number=general_config["version"],
                 exists=False,
             )
-            pyrisk.models.core.save_model(model, save_file, model_metrics)
+
+            if model_type == "nn":
+                pyrisk.models.core.save_model(
+                    model.state_dict(), save_file, model_metrics
+                )
+            else:
+                pyrisk.models.core.save_model(model, save_file, model_metrics)
 
         else:
             # Load model
@@ -122,7 +146,22 @@ if __name__ == "__main__":
                 v_number=general_config["version"],
             )
 
-            model, model_metrics = pyrisk.models.core.load_model(load_file)
+            if model_type == "nn":
+                state_dict, model_metrics = pyrisk.models.core.load_model(load_file)
+
+                # Get the number of input features from the first layer
+                first_layer_dict = next(iter(state_dict.values()))
+                n_features = first_layer_dict.shape[1]
+
+                # Create model and load state_dict
+                model = pyrisk.models.core.create_model(
+                    model_type,
+                    n_features=n_features,
+                    **model_config["architecture"],
+                )
+                model.load_state_dict(state_dict)
+            else:
+                model, model_metrics = pyrisk.models.core.load_model(load_file)
 
     except Exception:
         pyrisk.utils.exceptions.exception_handler(
