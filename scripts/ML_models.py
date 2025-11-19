@@ -104,7 +104,7 @@ if __name__ == "__main__":
                 if split_vars["group_name"]:
                     # Remove group name if using GroupKFold
                     n_features -= 1
-                breakpoint()
+
                 model = pyrisk.models.core.create_model(
                     model_type,
                     n_features=n_features,
