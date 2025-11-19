@@ -94,9 +94,18 @@ if __name__ == "__main__":
             ## MODEL CREATION AND TRAINING
             print("[INFO] Creating model")
             if model_type == "nn":
+                # Get number of features for NN model
+                n_features = len(data_config["features"]["feature_list"]) - len(
+                    model_config["labels"]["label_list"]
+                )
+
+                if split_vars["group_name"]:
+                    # Remove group name if using GroupKFold
+                    n_features -= 1
+
                 model = pyrisk.models.core.create_model(
                     model_type,
-                    n_features=14,
+                    n_features=n_features,
                     **model_config["architecture"],
                 )
             else:
