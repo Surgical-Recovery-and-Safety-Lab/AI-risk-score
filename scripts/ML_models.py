@@ -44,7 +44,9 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        print("[INFO] Loading parameters from configuration file")
+        pyrisk.utils.logger.info_handler(
+            logger, "Loading parameters from configuration file", script_name
+        )
         general_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
 
         model_type = general_config["model_type"]
@@ -65,14 +67,12 @@ if __name__ == "__main__":
             data_version,
         )
     except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_dir, log_config, script_name
-        )
+        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
 
     try:
         if not args.load:
-            print("[INFO] Getting data")
+            pyrisk.utils.logger.info_handler(logger, "Getting data", script_name)
             data = pyrisk.utils.io.load_data_from_csv(
                 pyrisk.utils.config.get_file_path(data_config, v_number=data_version)
             )
@@ -83,16 +83,18 @@ if __name__ == "__main__":
             nb_nan_rows = data.isna().any(axis=1).sum()
             data = data.dropna()
 
-            print(f"[INFO] Dropped {nb_nan_rows} rows with NaN values")
+            pyrisk.utils.logger.info_handler(
+                logger, f"Dropped {nb_nan_rows} rows with NaN values", script_name
+            )
 
             # Split data
-            print("[INFO] Splitting data")
+            pyrisk.utils.logger.info_handler(logger, "Splitting data", script_name)
             split_vars = data_config["split_variables"]
 
             kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
 
             ## MODEL CREATION AND TRAINING
-            print("[INFO] Creating model")
+            pyrisk.utils.logger.info_handler(logger, "Creating model", script_name)
             if model_type == "nn":
                 # Get number of features for NN model
                 n_features = len(data_config["features"]["feature_list"]) - len(
@@ -102,7 +104,7 @@ if __name__ == "__main__":
                 if split_vars["group_name"]:
                     # Remove group name if using GroupKFold
                     n_features -= 1
-
+                breakpoint()
                 model = pyrisk.models.core.create_model(
                     model_type,
                     n_features=n_features,
@@ -113,7 +115,7 @@ if __name__ == "__main__":
                     model_type, **model_config["config_parameters"]
                 )
 
-            print("[INFO] Training model")
+            pyrisk.utils.logger.info_handler(logger, "Training model", script_name)
             if model_type == "nn":
                 model_metrics = pyrisk.models.core.train_model(
                     model,
@@ -133,7 +135,7 @@ if __name__ == "__main__":
                     split_vars["group_name"],
                 )
 
-            print("[INFO] Saving model")
+            pyrisk.utils.logger.info_handler(logger, "Saving model", script_name)
             save_file = pyrisk.utils.config.get_file_path(
                 general_config,
                 v_number=general_config["version"],
@@ -149,7 +151,7 @@ if __name__ == "__main__":
 
         else:
             # Load model
-            print("[INFO] Loading model")
+            pyrisk.utils.logger.info_handler(logger, "Loading model", script_name)
             load_file = pyrisk.utils.config.get_file_path(
                 general_config,
                 v_number=general_config["version"],
@@ -173,14 +175,14 @@ if __name__ == "__main__":
                 model, model_metrics = pyrisk.models.core.load_model(load_file)
 
     except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_dir, log_config, script_name
-        )
+        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
 
     # Compute statistics
     try:
-        print("[INFO] Computing model statistics")
+        pyrisk.utils.logger.info_handler(
+            logger, "Computing model statistics", script_name
+        )
         ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
         pyrisk.metrics.core.print_metrics_CI(ci_dict)
 
@@ -188,7 +190,5 @@ if __name__ == "__main__":
         pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics)
 
     except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_dir, log_config, script_name
-        )
+        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
