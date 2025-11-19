@@ -1,7 +1,6 @@
-loss_fn = "BCEWithLogitsLoss"
-optimiser = "Adam"
-
 [hyperparameters]
+loss_name = "BCEWithLogitsLoss"
+optim_name = "Adam"
 epochs = 50
 batch_size = 64
 lr = 0.001
@@ -21,44 +20,10 @@ type = "ReLU"
 
 [[architecture.layers]]
 type = "Linear"
-out_features = 50
-
-[[architecture.layers]]
-type = "BatchNorm1d"
-
-[[architecture.layers]]
-type = "ReLU"
-
-[[architecture.layers]]
-type = "Linear"
-out_features = 25
-
-[[architecture.layers]]
-type = "BatchNorm1d"
-
-[[architecture.layers]]
-type = "ReLU"
-
-[[architecture.layers]]
-type = "Linear"
-out_features = 25
-
-[[architecture.layers]]
-type = "BatchNorm1d"
-
-[[architecture.layers]]
-type = "ReLU"
-
-[[architecture.layers]]
-type = "Linear"
-out_features = 10
-
-[[architecture.layers]]
-type = "BatchNorm1d"
-
-[[architecture.layers]]
-type = "ReLU"
-
-[[architecture.layers]]
-type = "Linear"
 out_features = 1
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "ReLU"
