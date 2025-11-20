@@ -44,8 +44,8 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        pyrisk.utils.logger.info_handler(
-            logger, "Loading parameters from configuration file", script_name
+        pyrisk.utils.logger.print_message(
+            "Loading parameters from configuration file", logger, script_name
         )
         general_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     try:
         if not args.load:
-            pyrisk.utils.logger.info_handler(logger, "Getting data", script_name)
+            pyrisk.utils.logger.print_message("Getting data", logger, script_name)
             data = pyrisk.utils.io.load_data_from_csv(
                 pyrisk.utils.config.get_file_path(data_config, v_number=data_version)
             )
@@ -83,18 +83,18 @@ if __name__ == "__main__":
             nb_nan_rows = data.isna().any(axis=1).sum()
             data = data.dropna()
 
-            pyrisk.utils.logger.info_handler(
-                logger, f"Dropped {nb_nan_rows} rows with NaN values", script_name
+            pyrisk.utils.logger.print_message(
+                f"Dropped {nb_nan_rows} rows with NaN values", logger, script_name
             )
 
             # Split data
-            pyrisk.utils.logger.info_handler(logger, "Splitting data", script_name)
+            pyrisk.utils.logger.print_message("Splitting data", logger, script_name)
             split_vars = data_config["split_variables"]
 
             kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
 
             ## MODEL CREATION AND TRAINING
-            pyrisk.utils.logger.info_handler(logger, "Creating model", script_name)
+            pyrisk.utils.logger.print_message("Creating model", logger, script_name)
             if model_type == "nn":
                 # Get number of features for NN model
                 n_features = len(data_config["features"]["feature_list"]) - len(
@@ -108,14 +108,15 @@ if __name__ == "__main__":
                 model = pyrisk.models.core.create_model(
                     model_type,
                     n_features=n_features,
+                    logger=logger,
                     **model_config["architecture"],
                 )
             else:
                 model = pyrisk.models.core.create_model(
-                    model_type, **model_config["config_parameters"]
+                    model_type, logger=logger, **model_config["config_parameters"]
                 )
 
-            pyrisk.utils.logger.info_handler(logger, "Training model", script_name)
+            pyrisk.utils.logger.print_message("Training model", logger, script_name)
             if model_type == "nn":
                 model_metrics = pyrisk.models.core.train_model(
                     model,
@@ -123,6 +124,7 @@ if __name__ == "__main__":
                     kfold_it,
                     model_config["labels"]["label_list"],
                     split_vars["group_name"],
+                    logger=logger,
                     **model_config["hyperparameters"],
                 )
 
@@ -133,9 +135,10 @@ if __name__ == "__main__":
                     kfold_it,
                     model_config["labels"]["label_list"],
                     split_vars["group_name"],
+                    logger=logger,
                 )
 
-            pyrisk.utils.logger.info_handler(logger, "Saving model", script_name)
+            pyrisk.utils.logger.print_message("Saving model", logger, script_name)
             save_file = pyrisk.utils.config.get_file_path(
                 general_config,
                 v_number=general_config["version"],
@@ -151,7 +154,7 @@ if __name__ == "__main__":
 
         else:
             # Load model
-            pyrisk.utils.logger.info_handler(logger, "Loading model", script_name)
+            pyrisk.utils.logger.print_message("Loading model", logger, script_name)
             load_file = pyrisk.utils.config.get_file_path(
                 general_config,
                 v_number=general_config["version"],
@@ -168,6 +171,7 @@ if __name__ == "__main__":
                 model = pyrisk.models.core.create_model(
                     model_type,
                     n_features=n_features,
+                    logger=logger,
                     **model_config["architecture"],
                 )
                 model.load_state_dict(state_dict)
@@ -180,8 +184,8 @@ if __name__ == "__main__":
 
     # Compute statistics
     try:
-        pyrisk.utils.logger.info_handler(
-            logger, "Computing model statistics", script_name
+        pyrisk.utils.logger.print_message(
+            "Computing model statistics", logger, script_name
         )
         ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
         pyrisk.metrics.core.print_metrics_CI(ci_dict)
