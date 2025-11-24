@@ -1,2 +1,5 @@
 [labels]
 label_list = [ "MORTALITY_30D" ]
+
+[weighting]
+weighting_fn = "inverse_class_sum_weighting"
