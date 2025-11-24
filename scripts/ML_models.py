@@ -61,6 +61,8 @@ if __name__ == "__main__":
             join_token="",
         )
 
+        label_list = model_config["labels"]["label_list"]
+
         # Get data configuration parameters
         data_config = pyrisk.utils.config.get_configuration(
             general_config["data_parameters"],
@@ -98,7 +100,7 @@ if __name__ == "__main__":
             if model_type == "nn":
                 # Get number of features for NN model
                 n_features = len(data_config["features"]["feature_list"]) - len(
-                    model_config["labels"]["label_list"]
+                    label_list
                 )
 
                 if split_vars["group_name"]:
@@ -113,7 +115,10 @@ if __name__ == "__main__":
                 )
             else:
                 model = pyrisk.models.core.create_model(
-                    model_type, logger=logger, **model_config["config_parameters"]
+                    model_type,
+                    logger=logger,
+                    n_classes=len(label_list),
+                    **model_config["config_parameters"],
                 )
 
             pyrisk.utils.logger.print_message("Training model", logger, script_name)
@@ -122,9 +127,10 @@ if __name__ == "__main__":
                     model,
                     data,
                     kfold_it,
-                    model_config["labels"]["label_list"],
+                    label_list,
                     split_vars["group_name"],
                     logger=logger,
+                    weighting_fn=model_config["weighting"]["weighting_fn"],
                     **model_config["hyperparameters"],
                 )
 
@@ -133,9 +139,10 @@ if __name__ == "__main__":
                     model,
                     data,
                     kfold_it,
-                    model_config["labels"]["label_list"],
+                    label_list,
                     split_vars["group_name"],
                     logger=logger,
+                    weighting_fn=model_config["weighting"]["weighting_fn"],
                 )
 
             pyrisk.utils.logger.print_message("Saving model", logger, script_name)
@@ -188,10 +195,10 @@ if __name__ == "__main__":
             "Computing model statistics", logger, script_name
         )
         ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
-        pyrisk.metrics.core.print_metrics_CI(ci_dict)
+        pyrisk.metrics.core.print_metrics_CI(ci_dict, label_list, logger)
 
-        pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics)
-        pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics)
+        pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
+        pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
 
     except Exception:
         pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
