@@ -1,0 +1,5 @@
+[labels]
+label_list = [ "MORTALITY_30D", "ANY_COMP" ]
+
+[weighting]
+weighting_fn = "inverse_frequency_class_weights"
