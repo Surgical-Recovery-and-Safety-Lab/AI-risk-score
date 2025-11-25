@@ -1,5 +1,5 @@
 [labels]
-label_list = [ "MORTALITY_30D" ]
+label_list = [ "MORTALITY_30D", "ANY_COMP" ]
 
 [weighting]
 weighting_fn = "inverse_frequency_sum_sample_weights"
