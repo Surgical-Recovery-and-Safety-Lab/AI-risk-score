@@ -196,6 +196,7 @@ if __name__ == "__main__":
         )
         ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
         pyrisk.metrics.core.print_metrics_CI(ci_dict, label_list, logger)
+        pyrisk.metrics.plots.plot_metrics_CI(ci_dict, label_list)
 
         pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
         pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
