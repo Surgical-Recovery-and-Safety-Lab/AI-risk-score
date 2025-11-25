@@ -89,10 +89,8 @@ if __name__ == "__main__":
                 f"Dropped {nb_nan_rows} rows with NaN values", logger, script_name
             )
 
-            # Split data
-            pyrisk.utils.logger.print_message("Splitting data", logger, script_name)
+            # Setup kfold iterator
             split_vars = data_config["split_variables"]
-
             kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
 
             ## MODEL CREATION AND TRAINING
