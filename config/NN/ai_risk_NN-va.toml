@@ -2,4 +2,4 @@
 label_list = [ "MORTALITY_30D" ]
 
 [weighting]
-weighting_fn = "inverse_class_sum_weighting"
+weighting_fn = "inverse_frequency_class_weights"
