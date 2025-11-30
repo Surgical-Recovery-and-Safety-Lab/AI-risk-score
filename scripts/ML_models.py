@@ -10,6 +10,8 @@ import argparse
 import pathlib
 import sys
 
+import pandas as pd
+
 import pyrisk
 
 if __name__ == "__main__":
@@ -58,7 +60,6 @@ if __name__ == "__main__":
         model_config = pyrisk.utils.config.get_configuration(
             general_config["model_parameters"],
             model_version,
-            join_token="",
         )
 
         label_list = model_config["labels"]["label_list"]
@@ -76,7 +77,9 @@ if __name__ == "__main__":
         if not args.load:
             pyrisk.utils.logger.print_message("Getting data", logger, script_name)
             data = pyrisk.utils.io.load_data_from_csv(
-                pyrisk.utils.config.get_file_path(data_config, v_number=data_version)
+                pyrisk.utils.config.get_file_path(
+                    data_config, v_number=data_version[:4]  # Use only first 2 numbers
+                )
             )
             # Convert objects to categorical (not saved so needs to be here)
             data = pyrisk.data.preprocessing.convert_object_to_categorical(data)
