@@ -48,7 +48,7 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        print("[INFO] Loading configuration")
+        pyrisk.utils.logger.print_message("Loading configuration", logger, script_name)
         data_config_top_level = pyrisk.utils.io.read_toml_configuration(
             args.data_config_file
         )
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     query = f"SELECT {features} FROM {db_parameters["table_name"]};"
 
     try:
-        print("[INFO] Extracting data")
+        pyrisk.utils.logger.print_message("Extracting data", logger, script_name)
         df = pyrisk.data.db.extract_data_from_duckdb(
             pyrisk.utils.config.get_file_path(data_config, path_type="db"),
             query,
@@ -78,25 +78,8 @@ if __name__ == "__main__":
         )
         exit(1)
 
-    preprocessing_config = data_config["preprocessing"]
-
-    if preprocessing_config["preprocess"]:
-        # If the preprocess flag is true
-        print("[INFO] Preprocessing data")
-        try:
-            if preprocessing_config["label_encoder"]["feature_list"] != []:
-                df = pyrisk.data.preprocessing.label_encode_data(
-                    df, preprocessing_config["label_encoder"]["feature_list"]
-                )
-
-        except Exception:
-            pyrisk.utils.exceptions.exception_handler(
-                logger, log_dir, log_config, script_name
-            )
-            exit(1)
-
     try:
-        print("[INFO] Saving data")
+        pyrisk.utils.logger.print_message("Saving data", logger, script_name)
         save_file = pyrisk.utils.config.get_file_path(
             data_config, v_number=data_config_top_level["version"], exists=False
         )
