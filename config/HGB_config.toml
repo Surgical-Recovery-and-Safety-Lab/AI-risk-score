@@ -1,10 +1,11 @@
-version = "v0.2.1-c2"
+version = "v0.2.1.1-b.1.2"
 model_type = "hgb"
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [model_parameters]
 dir = "config/HGB/"
-name = "ai_risk_HGB-"
+subfolders = [ "labels", "imbalance", "hyperparameters" ]
+name = "ai_risk_HGB_"
 extension = ".toml"
 
 [io_parameters]
@@ -14,5 +15,6 @@ extension = ".pkl"
 
 [data_parameters]
 dir = "config/data/"
-name = "ai_risk_data-"
+subfolders = [ "general", "features", "splitting", "preprocessing" ]
+name = "ai_risk_data_"
 extension = ".toml"

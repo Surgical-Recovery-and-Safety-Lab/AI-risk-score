@@ -1,0 +1,6 @@
+[split_variables]
+temporal_k_fold = true
+n_splits = 15
+shuffle = true
+random_state = 42
+group_name = "OP_YEAR"

@@ -1,27 +1,18 @@
-[split_variables]
-temporal_k_fold = true
-n_splits = 15
-shuffle = true
-random_state = 42
-group_name = "OP_YEAR"
-
 [features]
 feature_list = [
   "AGE",
   "ETHNICITY_ORIGINAL",
   "SEX_ORIGINAL",
   "DEP18_ORIGINAL",
-  "GCH2018_ORIGINAL",
   "M3_SCORE",
   "PRIOR_CANCER",
   "FACILITY",
   "ADMISSION_ACUITY",
-  "ADMISSION_SOURCE",
   "CATEGORY_LEVEL_1",
-  "CATEGORY_LEVEL_2",
   "OP_SEVERITY",
+  "OP_CODE",
+  "DOMICILE_CODE",
   "TRAUMA",
-  "OP_YEAR",
   "MORTALITY_30D",
   "ANY_COMP",
 ]
