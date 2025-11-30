@@ -92,6 +92,28 @@ if __name__ == "__main__":
                 f"Dropped {nb_nan_rows} rows with NaN values", logger, script_name
             )
 
+            preprocessing_config = data_config["preprocessing"]
+
+            if preprocessing_config["preprocess"]:
+                # If the preprocess flag is true
+                print_message("Preprocessing data", logger, script_name)
+                try:
+                    if preprocessing_config["label_encoder"]["feature_list"] != []:
+                        data = pyrisk.data.preprocessing.label_encode_data(
+                            data, preprocessing_config["label_encoder"]["feature_list"]
+                        )
+
+                except Exception:
+                    pyrisk.utils.exceptions.exception_handler(
+                        logger, log_dir, log_config, script_name
+                    )
+                    exit(1)
+
+            data_pos = data[(data["ANY_COMP"] == 1) | (data["MORTALITY_30D"] == 1)]
+            data_neg = data[(data["ANY_COMP"] == 0) & (data["MORTALITY_30D"] == 0)]
+
+            data = pd.concat([data_pos, data_neg.sample(n=round(0.1 * len(data_pos)))])
+
             # Setup kfold iterator
             split_vars = data_config["split_variables"]
             kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
