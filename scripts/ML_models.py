@@ -160,7 +160,7 @@ if __name__ == "__main__":
                     label_list,
                     split_vars["group_name"],
                     logger=logger,
-                    weighting_fn=model_config["weighting"]["weighting_fn"],
+                    **model_config,
                 )
 
             pyrisk.utils.logger.print_message("Saving model", logger, script_name)
