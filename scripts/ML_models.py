@@ -11,7 +11,6 @@ import pathlib
 import sys
 
 import pandas as pd
-
 import pyrisk
 
 if __name__ == "__main__":
@@ -96,7 +95,9 @@ if __name__ == "__main__":
 
             if preprocessing_config["preprocess"]:
                 # If the preprocess flag is true
-                print_message("Preprocessing data", logger, script_name)
+                pyrisk.utils.logger.print_message(
+                    "Preprocessing data", logger, script_name
+                )
                 try:
                     if preprocessing_config["label_encoder"]["feature_list"] != []:
                         data = pyrisk.data.preprocessing.label_encode_data(
