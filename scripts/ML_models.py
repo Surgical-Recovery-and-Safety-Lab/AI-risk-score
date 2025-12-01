@@ -92,19 +92,19 @@ if __name__ == "__main__":
 
             preprocessing_config = data_config["preprocessing"]
 
-            if preprocessing_config["preprocess"]:
+            if preprocessing_config.pop("preprocess"):
                 # If the preprocess flag is true
                 pyrisk.utils.logger.print_message(
                     "Preprocessing data", logger, script_name
                 )
                 try:
-                    if preprocessing_config["label_encoder"]["feature_list"] != []:
-                        data = pyrisk.data.preprocessing.label_encode_data(
-                            data, preprocessing_config["label_encoder"]["feature_list"]
+                    for key in preprocessing_config.keys():
+                        data = pyrisk.data.preprocessing.preprocess_data(
+                            data, preprocessing_config[key]["feature_list"], key
                         )
 
                 except Exception:
-                    pyrisk.utils.exceptions.exception_handler(
+                    pyrisk.utils.logger.exception_handler(
                         logger, log_dir, log_config, script_name
                     )
                     exit(1)
