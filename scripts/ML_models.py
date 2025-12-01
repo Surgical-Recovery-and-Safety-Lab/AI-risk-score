@@ -109,11 +109,6 @@ if __name__ == "__main__":
                     )
                     exit(1)
 
-            data_pos = data[(data["ANY_COMP"] == 1) | (data["MORTALITY_30D"] == 1)]
-            data_neg = data[(data["ANY_COMP"] == 0) & (data["MORTALITY_30D"] == 0)]
-
-            data = pd.concat([data_pos, data_neg.sample(n=round(0.1 * len(data_pos)))])
-
             # Setup kfold iterator
             split_vars = data_config["split_variables"]
             kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
