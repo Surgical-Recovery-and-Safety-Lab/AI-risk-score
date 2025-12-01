@@ -148,8 +148,7 @@ if __name__ == "__main__":
                     label_list,
                     split_vars["group_name"],
                     logger=logger,
-                    weighting_fn=model_config["weighting"]["weighting_fn"],
-                    **model_config["hyperparameters"],
+                    **model_config,
                 )
 
             else:
