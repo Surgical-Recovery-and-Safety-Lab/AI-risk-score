@@ -10,7 +10,6 @@ import argparse
 import pathlib
 import sys
 
-import pandas as pd
 import pyrisk
 
 if __name__ == "__main__":
