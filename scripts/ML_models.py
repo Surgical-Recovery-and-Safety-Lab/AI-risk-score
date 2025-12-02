@@ -22,6 +22,13 @@ if __name__ == "__main__":
         help="Path to the model configuration file",
     )
     parser.add_argument("--load", "-l", action="store_true", help="Loading flag")
+    parser.add_argument("--version", help="Version number overload for multiprocessing")
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Flag to turn off printing"
+    )
+    parser.add_argument(
+        "--no-plots", action="store_false", help="Flag used to produce plots"
+    )
 
     args = parser.parse_args()
 
@@ -32,12 +39,18 @@ if __name__ == "__main__":
 
         # Create logger
         script_name = str(pathlib.Path(__file__).stem)
+        if args.version:
+            script_name += "_" + args.version
         log_dir = log_config["base_dir"] + log_config["log_dir"]
         log_dir = log_config["log_dir"]
         logger = pyrisk.utils.logger.setup_logger(
             script_name,
             log_dir,
         )
+
+        if args.quiet:
+            # If quiet flag, turn off printing to screen
+            logger.setLevel(-1)
     except (TypeError, ValueError, FileNotFoundError, IsADirectoryError) as err:
         sys.stderr.write("An error occured when trying to create the logger")
         sys.stderr.write(repr(err))
@@ -48,6 +61,12 @@ if __name__ == "__main__":
             "Loading parameters from configuration file", logger, script_name
         )
         general_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
+        if args.version:
+            # Swap version numbers if overloading
+            general_config["version"] = args.version
+            pyrisk.utils.logger.print_message(
+                f"Version number: {general_config["version"]}", logger, script_name
+            )
 
         model_type = general_config["model_type"]
         data_version, model_version = pyrisk.utils.config.split_version_number(
@@ -213,10 +232,12 @@ if __name__ == "__main__":
         )
         ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
         pyrisk.metrics.core.print_metrics_CI(ci_dict, label_list, logger)
-        pyrisk.metrics.plots.plot_metrics_CI(ci_dict, label_list)
 
-        pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
-        pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
+        if args.no_plots:
+            pyrisk.metrics.plots.plot_metrics_CI(ci_dict, label_list)
+
+            pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
+            pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
 
     except Exception:
         pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
