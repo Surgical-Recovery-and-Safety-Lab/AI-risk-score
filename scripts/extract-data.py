@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     try:
         pyrisk.utils.logger.print_message("Extracting data", logger, script_name)
-        df = pyrisk.data.db.extract_data_from_duckdb(
+        df = pyrisk.data.db.extract_data_from_db(
             pyrisk.utils.config.get_file_path(data_config, path_type="db"),
             query,
         )

@@ -7,6 +7,6 @@ extension = ".csv"
 
 [db_parameters]
 dir = "data/raw/"
-name = "nz_hospital_db"
+name = "nz_hospital"
 table_name = "main"
-extension = ".duckdb"
+extension = ".db"
