@@ -57,9 +57,7 @@ if __name__ == "__main__":
             data_config_top_level["version"],
         )
     except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_dir, log_config, script_name
-        )
+        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
 
     features = ",".join(data_config["features"]["feature_list"])
@@ -73,9 +71,7 @@ if __name__ == "__main__":
             query,
         )
     except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_dir, log_config, script_name
-        )
+        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
 
     try:
@@ -85,7 +81,5 @@ if __name__ == "__main__":
         )
         df.to_csv(save_file, index=False)
     except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_dir, log_config, script_name
-        )
+        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)

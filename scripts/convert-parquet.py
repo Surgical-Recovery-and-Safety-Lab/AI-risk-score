@@ -57,7 +57,5 @@ if __name__ == "__main__":
             args.parquet_file, args.duckdb_file, args.table_name
         )
     except Exception:
-        pyrisk.utils.exceptions.exception_handler(
-            logger, log_dir, log_config, script_name
-        )
+        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
