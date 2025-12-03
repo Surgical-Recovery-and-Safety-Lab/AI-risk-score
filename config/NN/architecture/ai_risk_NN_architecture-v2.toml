@@ -1,37 +1,73 @@
-
-
-## Note in_features are automatically identified during model creation
-
 [architecture]
 [[architecture.layers]]
 type = "Linear"
-out_features = 50
+out_features = 512
+
+[[architecture.layers]]
+type = "Dropout"
+p = 0.2
 
 [[architecture.layers]]
 type = "BatchNorm1d"
 
 [[architecture.layers]]
-type = "ReLU"
+type = "LeakyReLU"
 
 [[architecture.layers]]
 type = "Linear"
-out_features = 50
+out_features = 256
+
+[[architecture.layers]]
+type = "Dropout"
+p = 0.2
 
 [[architecture.layers]]
 type = "BatchNorm1d"
 
 [[architecture.layers]]
-type = "ReLU"
+type = "LeakyReLU"
 
 [[architecture.layers]]
 type = "Linear"
-out_features = 10
+out_features = 128
+
+[[architecture.layers]]
+type = "Dropout"
+p = 0.2
 
 [[architecture.layers]]
 type = "BatchNorm1d"
 
 [[architecture.layers]]
-type = "ReLU"
+type = "LeakyReLU"
+
+[[architecture.layers]]
+type = "Linear"
+out_features = 64
+
+[[architecture.layers]]
+type = "Dropout"
+p = 0.2
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "LeakyReLU"
+
+[[architecture.layers]]
+type = "Linear"
+out_features = 32
+
+[[architecture.layers]]
+type = "Dropout"
+p = 0.2
+
+[[architecture.layers]]
+type = "BatchNorm1d"
+
+[[architecture.layers]]
+type = "LeakyReLU"
 
 [[architecture.layers]]
 type = "Linear"
