@@ -27,7 +27,7 @@ if __name__ == "__main__":
         "-q", "--quiet", action="store_true", help="Flag to turn off printing"
     )
     parser.add_argument(
-        "--no-plots", action="store_false", help="Flag used to produce plots"
+        "--no-plots", action="store_false", help="Flag used to turn off plotting"
     )
 
     args = parser.parse_args()
