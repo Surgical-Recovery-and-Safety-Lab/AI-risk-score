@@ -11,7 +11,7 @@ import multiprocessing
 import subprocess
 
 
-def run_parallel(version_number):
+def run_parallel(version_number, model_config_file):
     """
     Runs the ML_models.py script for parallel call.
 
@@ -19,6 +19,8 @@ def run_parallel(version_number):
     ----------
     version_number : str
         Version number to use.
+    model_config_file : str
+        Path to the model configuration file.
 
     Returns
     -------
@@ -30,7 +32,7 @@ def run_parallel(version_number):
         [
             "python3",
             "ML_models.py",
-            args.model_config_file,
+            model_config_file,
             "--version",
             version_number,
             "--no-plots",
@@ -59,4 +61,4 @@ if __name__ == "__main__":
     version_numbers = ["v0.2.1.3-b.3.2", "v0.2.1.3-b.3.1"]
 
     with multiprocessing.Pool(processes=args.n_processes) as pool:
-        pool.map(run_parallel, version_numbers)
+        pool.starmap(run_parallel, version_numbers, args.model_config_file)
