@@ -7,7 +7,6 @@ Sequential call to ML-models.py
 """
 
 import argparse
-import multiprocessing
 import subprocess
 
 
@@ -29,7 +28,7 @@ def run_sequential(version_number):
     subprocess.run(
         [
             "python3",
-            "ML_models.py",
+            "ML-models.py",
             args.model_config_file,
             "--version",
             version_number,
@@ -47,15 +46,14 @@ if __name__ == "__main__":
         metavar="model-config-file",
         help="Path to the model configuration file",
     )
-    parser.add_argument(
-        "n_processes",
-        metavar="n-processes",
-        type=int,
-        help="Number of processes to use",
-    )
 
     args = parser.parse_args()
-    version_numbers = ["v0.2.1.3-b.3.2", "v0.2.1.3-b.3.1"]
+    version_numbers = [
+        "v0.2.1.3-a.1.1",
+        "v0.2.1.3-a.2.1",
+        "v0.2.1.3-a.3.1",
+        "v0.2.1.3-a.4.1",
+    ]
 
     for version in version_numbers:
         run_sequential(version)

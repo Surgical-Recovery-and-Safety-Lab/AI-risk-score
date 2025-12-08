@@ -11,16 +11,16 @@ import multiprocessing
 import subprocess
 
 
-def run_parallel(version_number, model_config_file):
+def run_parallel(model_config_file, version_number):
     """
-    Runs the ML_models.py script for parallel call.
+    Runs the ML-models.py script for parallel call.
 
     Parameters
     ----------
-    version_number : str
-        Version number to use.
     model_config_file : str
         Path to the model configuration file.
+    version_number : str
+        Version number to use.
 
     Returns
     -------
@@ -31,7 +31,7 @@ def run_parallel(version_number, model_config_file):
     subprocess.run(
         [
             "python3",
-            "ML_models.py",
+            "ML-models.py",
             model_config_file,
             "--version",
             version_number,
@@ -59,6 +59,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     version_numbers = ["v0.2.1.3-b.3.2", "v0.2.1.3-b.3.1"]
+    input_args = [(args.model_config_file, version) for version in version_numbers]
 
     with multiprocessing.Pool(processes=args.n_processes) as pool:
-        pool.starmap(run_parallel, version_numbers, args.model_config_file)
+        pool.starmap(run_parallel, input_args)
