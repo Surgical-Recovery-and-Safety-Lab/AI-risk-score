@@ -10,7 +10,12 @@ import argparse
 import pathlib
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pyrisk
+from sklearn.calibration import CalibrationDisplay
+from sklearn.linear_model import LogisticRegression
+from sklearn.multioutput import MultiOutputClassifier
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -132,6 +137,16 @@ if __name__ == "__main__":
             split_vars = data_config["split_variables"]
             kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
 
+            train_idx, test_idx = pyrisk.data.preprocessing.get_validation_idx(
+                np.arange(len(data), dtype=int), data[split_vars["group_name"]]
+            )
+            test_data = data.iloc[test_idx]
+            test_data, test_labels = pyrisk.data.preprocessing.extract_labels(
+                test_data, label_list
+            )
+            test_data = test_data.drop(split_vars["group_name"], axis=1)
+            data = data.iloc[train_idx]
+
             ## MODEL CREATION AND TRAINING
             pyrisk.utils.logger.print_message("Creating model", logger, script_name)
             if model_type == "nn":
@@ -158,24 +173,30 @@ if __name__ == "__main__":
                     **model_config["config_parameters"],
                 )
 
+            if len(label_list) > 1:
+                calibration_model = MultiOutputClassifier(LogisticRegression())
+            else:
+                calibration_model = LogisticRegression()
             pyrisk.utils.logger.print_message("Training model", logger, script_name)
             if model_type == "nn":
-                model_metrics = pyrisk.models.core.train_model(
+                model_metrics, calibration_metrics = pyrisk.models.core.train_model(
                     model,
                     data,
                     kfold_it,
                     label_list,
+                    calibration_model,
                     split_vars["group_name"],
                     logger=logger,
                     **model_config,
                 )
 
             else:
-                model_metrics = pyrisk.models.core.train_model(
+                model_metrics, calibration_metrics = pyrisk.models.core.train_model(
                     model,
                     data,
                     kfold_it,
                     label_list,
+                    calibration_model,
                     split_vars["group_name"],
                     logger=logger,
                     **model_config,
@@ -238,7 +259,6 @@ if __name__ == "__main__":
 
             pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
             pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
-
     except Exception:
         pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
