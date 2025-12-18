@@ -10,16 +10,22 @@ import argparse
 import pathlib
 import sys
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pyrisk
-from sklearn.calibration import CalibrationDisplay
-from sklearn.linear_model import LogisticRegression
-from sklearn.multioutput import MultiOutputClassifier
+from pyrisk.data.preprocessing import extract_labels
+from pyrisk.metrics.core import compute_all_CI, print_metrics_CI
+from pyrisk.metrics.plots import (
+    plot_metrics_CI,
+    plot_prediction_distribution,
+    plot_reliability_diagrams,
+)
+from pyrisk.models.core import get_positive_proba, load_pipeline, save_pipeline
+from pyrisk.pipeline.Pipeline import Pipeline
+from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
+from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
+from pyrisk.utils.logger import exception_handler, print_message, setup_logger
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a machine learning model"
+        description="Create and train a Pipeline of machine learning models"
     )
     parser.add_argument(
         "model_config_file",
@@ -40,7 +46,7 @@ if __name__ == "__main__":
     try:
         print("[INFO] Setting up logger")
         # Read log configuration file
-        log_config = pyrisk.utils.io.read_toml_configuration("../config/log.toml")
+        log_config = read_toml_configuration("../config/log.toml")
 
         # Create logger
         script_name = str(pathlib.Path(__file__).stem)
@@ -48,10 +54,7 @@ if __name__ == "__main__":
             script_name += "_" + args.version
         log_dir = log_config["base_dir"] + log_config["log_dir"]
         log_dir = log_config["log_dir"]
-        logger = pyrisk.utils.logger.setup_logger(
-            script_name,
-            log_dir,
-        )
+        logger = setup_logger(script_name, log_dir)
 
         if args.quiet:
             # If quiet flag, turn off printing to screen
@@ -62,203 +65,143 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        pyrisk.utils.logger.print_message(
-            "Loading parameters from configuration file", logger, script_name
-        )
-        general_config = pyrisk.utils.io.read_toml_configuration(args.model_config_file)
+        print_message("Loading parameters from configuration file", logger, script_name)
+        general_config = read_toml_configuration(args.model_config_file)
+
         if args.version:
             # Swap version numbers if overloading
             general_config["version"] = args.version
-            pyrisk.utils.logger.print_message(
-                f"Version number: {general_config["version"]}", logger, script_name
-            )
 
-        model_type = general_config["model_type"]
-        data_version, model_version = pyrisk.utils.config.split_version_number(
-            general_config["version"]
+        print_message(
+            f"Version number: {general_config["version"]}", logger, script_name
         )
 
-        # Get model configuration parameters
-        model_config = pyrisk.utils.config.get_configuration(
-            general_config["model_parameters"],
-            model_version,
-        )
-
-        label_list = model_config["labels"]["label_list"]
+        data_version, _ = split_version_number(general_config["version"])
 
         # Get data configuration parameters
-        data_config = pyrisk.utils.config.get_configuration(
+        data_config = get_configuration(
             general_config["data_parameters"],
             data_version,
         )
+        pipeline = Pipeline(general_config, logger)
+
     except Exception:
-        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
+        exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
 
     try:
+        print_message("Getting data", logger, script_name)
+        data = load_data_from_csv(
+            get_file_path(
+                data_config, v_number=data_version[:4]  # Use only first 2 numbers
+            )
+        )
+
         if not args.load:
-            pyrisk.utils.logger.print_message("Getting data", logger, script_name)
-            data = pyrisk.utils.io.load_data_from_csv(
-                pyrisk.utils.config.get_file_path(
-                    data_config, v_number=data_version[:4]  # Use only first 2 numbers
-                )
-            )
-            # Convert objects to categorical (not saved so needs to be here)
-            data = pyrisk.data.preprocessing.convert_object_to_categorical(data)
+            pipeline.preprocessor.fit(data)
+            X_train, X_test = pipeline.get_test_data(data)
+            pipeline.run(X_train)
 
-            # Remove NaN values
-            nb_nan_rows = data.isna().any(axis=1).sum()
-            data = data.dropna()
-
-            pyrisk.utils.logger.print_message(
-                f"Dropped {nb_nan_rows} rows with NaN values", logger, script_name
-            )
-
-            preprocessing_config = data_config["preprocessing"]
-
-            if preprocessing_config.pop("preprocess"):
-                # If the preprocess flag is true
-                pyrisk.utils.logger.print_message(
-                    "Preprocessing data", logger, script_name
-                )
-                try:
-                    for key in preprocessing_config.keys():
-                        data = pyrisk.data.preprocessing.preprocess_data(
-                            data, preprocessing_config[key]["feature_list"], key
-                        )
-
-                except Exception:
-                    pyrisk.utils.logger.exception_handler(
-                        logger, log_dir, log_config, script_name
-                    )
-                    exit(1)
-
-            # Setup kfold iterator
-            split_vars = data_config["split_variables"]
-            kfold_it = pyrisk.data.preprocessing.test_train_it(**split_vars)
-
-            train_idx, test_idx = pyrisk.data.preprocessing.get_validation_idx(
-                np.arange(len(data), dtype=int), data[split_vars["group_name"]]
-            )
-            test_data = data.iloc[test_idx]
-            test_data, test_labels = pyrisk.data.preprocessing.extract_labels(
-                test_data, label_list
-            )
-            test_data = test_data.drop(split_vars["group_name"], axis=1)
-            data = data.iloc[train_idx]
-
-            ## MODEL CREATION AND TRAINING
-            pyrisk.utils.logger.print_message("Creating model", logger, script_name)
-            if model_type == "nn":
-                # Get number of features for NN model
-                n_features = len(data_config["features"]["feature_list"]) - len(
-                    label_list
-                )
-
-                if split_vars["group_name"]:
-                    # Remove group name if using GroupKFold
-                    n_features -= 1
-
-                model = pyrisk.models.core.create_model(
-                    model_type,
-                    n_features=n_features,
-                    logger=logger,
-                    **model_config["architecture"],
-                )
-            else:
-                model = pyrisk.models.core.create_model(
-                    model_type,
-                    logger=logger,
-                    n_classes=len(label_list),
-                    **model_config["config_parameters"],
-                )
-
-            if len(label_list) > 1:
-                calibration_model = MultiOutputClassifier(LogisticRegression())
-            else:
-                calibration_model = LogisticRegression()
-            pyrisk.utils.logger.print_message("Training model", logger, script_name)
-            if model_type == "nn":
-                model_metrics, calibration_metrics = pyrisk.models.core.train_model(
-                    model,
-                    data,
-                    kfold_it,
-                    label_list,
-                    calibration_model,
-                    split_vars["group_name"],
-                    logger=logger,
-                    **model_config,
-                )
-
-            else:
-                model_metrics, calibration_metrics = pyrisk.models.core.train_model(
-                    model,
-                    data,
-                    kfold_it,
-                    label_list,
-                    calibration_model,
-                    split_vars["group_name"],
-                    logger=logger,
-                    **model_config,
-                )
-
-            pyrisk.utils.logger.print_message("Saving model", logger, script_name)
-            save_file = pyrisk.utils.config.get_file_path(
+            print_message("Saving pipeline", logger, script_name)
+            save_file = get_file_path(
                 general_config,
                 v_number=general_config["version"],
                 exists=False,
             )
-
-            if model_type == "nn":
-                pyrisk.models.core.save_model(
-                    model.state_dict(), save_file, model_metrics
-                )
-            else:
-                pyrisk.models.core.save_model(model, save_file, model_metrics)
+            save_pipeline(pipeline, save_file)
 
         else:
             # Load model
-            pyrisk.utils.logger.print_message("Loading model", logger, script_name)
-            load_file = pyrisk.utils.config.get_file_path(
+            print_message("Loading model", logger, script_name)
+            load_file = get_file_path(
                 general_config,
                 v_number=general_config["version"],
             )
-
-            if model_type == "nn":
-                state_dict, model_metrics = pyrisk.models.core.load_model(load_file)
-
-                # Get the number of input features from the first layer
-                first_layer_dict = next(iter(state_dict.values()))
-                n_features = first_layer_dict.shape[1]
-
-                # Create model and load state_dict
-                model = pyrisk.models.core.create_model(
-                    model_type,
-                    n_features=n_features,
-                    logger=logger,
-                    **model_config["architecture"],
-                )
-                model.load_state_dict(state_dict)
-            else:
-                model, model_metrics = pyrisk.models.core.load_model(load_file)
+            pipeline = load_pipeline(load_file)
+            X_train, X_test = pipeline.get_test_data(data)
 
     except Exception:
-        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
+        exception_handler(logger, log_dir, log_config, script_name)
+        exit(1)
+
+    try:
+        print_message("Preparing test set", logger, script_name)
+        X_test = pipeline.preprocessor.transform(X_test)
+        X_test, y_test = extract_labels(X_test, pipeline.label_list)
+
+    except Exception:
+        exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
 
     # Compute statistics
     try:
-        pyrisk.utils.logger.print_message(
-            "Computing model statistics", logger, script_name
+        print_message("Computing model statistics", logger, script_name)
+        ci_dict = compute_all_CI(pipeline.predictor_metrics)
+        ci_calib_dict = compute_all_CI(pipeline.calibrator_metrics)
+
+        print_message("Uncalibrated statistics", logger, script_name)
+        print_metrics_CI(ci_dict, pipeline.label_list, logger)
+
+        print_message("Calibrated statistics", logger, script_name)
+        print_metrics_CI(ci_calib_dict, pipeline.label_list, logger)
+
+        save_file = get_file_path(
+            general_config,
+            v_number=general_config["version"],
+            path_type="fig",
+            exists=False,
         )
-        ci_dict = pyrisk.metrics.core.compute_all_CI(model_metrics)
-        pyrisk.metrics.core.print_metrics_CI(ci_dict, label_list, logger)
+        extension = general_config["fig_parameters"]["extension"]
 
-        if args.no_plots:
-            pyrisk.metrics.plots.plot_metrics_CI(ci_dict, label_list)
+        plot_metrics_CI(
+            ci_dict,
+            pipeline.label_list,
+            dpi=300,
+            figsize=(5, 5),
+            show_fig=args.no_plots,
+            save_path=save_file + "_metrics",
+            extension=extension,
+        )
+        plot_metrics_CI(
+            ci_calib_dict,
+            pipeline.label_list,
+            dpi=300,
+            figsize=(5, 5),
+            show_fig=args.no_plots,
+            save_path=save_file + "_calibrated_metrics",
+            extension=extension,
+        )
 
-            pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
-            pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
+        y_pred_proba = pipeline.predict_proba(X_test, "predictor")
+        y_pred_proba_calib = pipeline.predict_proba(X_test, "calibrator")
+
+        plot_prediction_distribution(
+            get_positive_proba(y_pred_proba),
+            get_positive_proba(y_pred_proba_calib),
+            label_list=pipeline.label_list,
+            save_path=save_file + "_proba_dist",
+            extension=extension,
+            show_fig=args.no_plots,
+            n_bins=50,
+            dpi=300,
+            figsize=(5, 5),
+        )
+        plot_reliability_diagrams(
+            y_test,
+            get_positive_proba(y_pred_proba),
+            get_positive_proba(y_pred_proba_calib),
+            label_list=pipeline.label_list,
+            save_path=save_file + "_reliability_diagram",
+            extension=extension,
+            show_fig=args.no_plots,
+            display_kwargs={"n_bins": 10, "strategy": "quantile"},
+            dpi=300,
+            figsize=(5, 5),
+        )
+
+        # pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
+        # pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
+
     except Exception:
-        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
+        exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
