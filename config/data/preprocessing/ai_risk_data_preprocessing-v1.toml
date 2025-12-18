@@ -1,7 +1,7 @@
 [preprocessing]
 preprocess = true # Perform preprocessing if true
 
-[preprocessing.label_encoder]
+[preprocessing.ordinal_encoder]
 # List of features to label encode
 feature_list = [
   "SEX_ORIGINAL",
