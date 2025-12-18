@@ -4,7 +4,7 @@ base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [model_parameters]
 dir = "config/HGB/"
-subfolders = [ "labels", "imbalance", "hyperparameters" ]
+subfolders = [ "labels", "imbalance", "hyperparameters", "calibrator" ]
 name = "ai_risk_HGB_"
 extension = ".toml"
 
