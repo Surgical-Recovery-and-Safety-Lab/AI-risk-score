@@ -13,6 +13,11 @@ dir = "models/"
 name = "ai_risk_HGB-"
 extension = ".pkl"
 
+[fig_parameters]
+dir = "figures/"
+name = "ai_risk_HGB_"
+extension = ".png"
+
 [data_parameters]
 dir = "config/data/"
 subfolders = [ "general", "features", "splitting", "preprocessing" ]
