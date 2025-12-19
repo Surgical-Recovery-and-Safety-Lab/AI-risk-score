@@ -56,9 +56,15 @@ if __name__ == "__main__":
         type=int,
         help="Number of processes to use",
     )
+    parser.add_argument(
+        "version_numbers",
+        metavar="version-numbers",
+        help="Version numbers to run",
+        nargs="+",
+    )
 
     args = parser.parse_args()
-    version_numbers = ["v0.2.1.3-b.3.2", "v0.2.1.3-b.3.1"]
+    version_numbers = args.version_numbers
     input_args = [(args.model_config_file, version) for version in version_numbers]
 
     with multiprocessing.Pool(processes=args.n_processes) as pool:

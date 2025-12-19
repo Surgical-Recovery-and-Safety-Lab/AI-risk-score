@@ -46,14 +46,15 @@ if __name__ == "__main__":
         metavar="model-config-file",
         help="Path to the model configuration file",
     )
+    parser.add_argument(
+        "version_numbers",
+        metavar="version-numbers",
+        help="Version numbers to run",
+        nargs="+",
+    )
 
     args = parser.parse_args()
-    version_numbers = [
-        "v0.2.1.3-a.1.1",
-        "v0.2.1.3-a.2.1",
-        "v0.2.1.3-a.3.1",
-        "v0.2.1.3-a.4.1",
-    ]
+    version_numbers = args.version_numbers
 
     for version in version_numbers:
         run_sequential(version)
