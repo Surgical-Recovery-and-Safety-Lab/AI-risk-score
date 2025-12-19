@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
-        help="Path to the model configuration file",
+        help="Path to the general configuration file",
     )
     parser.add_argument("--load", "-l", action="store_true", help="Loading flag")
     parser.add_argument("--version", help="Version number overload for multiprocessing")
@@ -60,7 +60,7 @@ if __name__ == "__main__":
             # If quiet flag, turn off printing to screen
             logger.setLevel(-1)
     except (TypeError, ValueError, FileNotFoundError, IsADirectoryError) as err:
-        sys.stderr.write("An error occured when trying to create the logger")
+        sys.stderr.write("An error occured when trying to create the logger\n")
         sys.stderr.write(repr(err))
         exit(1)
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
 
-    # Compute statistics
+    # Compute statistics and plots
     try:
         print_message("Computing model statistics", logger, script_name)
         ci_dict = compute_all_CI(pipeline.predictor_metrics)
