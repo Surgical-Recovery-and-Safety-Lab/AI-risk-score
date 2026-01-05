@@ -44,14 +44,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        print("[INFO] Setting up logger")
-        # Read log configuration file
+        print_message("Loading parameters from configuration file")
+        # Read log and general configuration file
         log_config = read_toml_configuration("../config/log.toml")
+        general_config = read_toml_configuration(args.model_config_file)
 
+        if args.version:
+            # Swap version numbers if overloading
+            general_config["version"] = args.version
+
+        print_message("Setting up logger")
         # Create logger
         script_name = str(pathlib.Path(__file__).stem)
-        if args.version:
-            script_name += "_" + args.version
+        script_name += "_" + general_config["version"]
         log_dir = log_config["base_dir"] + log_config["log_dir"]
         log_dir = log_config["log_dir"]
         logger = setup_logger(script_name, log_dir)
@@ -59,23 +64,17 @@ if __name__ == "__main__":
         if args.quiet:
             # If quiet flag, turn off printing to screen
             logger.setLevel(-1)
+
+        print_message(
+            f"Version number: {general_config["version"]}", logger, script_name
+        )
+
     except (TypeError, ValueError, FileNotFoundError, IsADirectoryError) as err:
         sys.stderr.write("An error occured when trying to create the logger\n")
         sys.stderr.write(repr(err))
         exit(1)
 
     try:
-        print_message("Loading parameters from configuration file", logger, script_name)
-        general_config = read_toml_configuration(args.model_config_file)
-
-        if args.version:
-            # Swap version numbers if overloading
-            general_config["version"] = args.version
-
-        print_message(
-            f"Version number: {general_config["version"]}", logger, script_name
-        )
-
         data_version, _ = split_version_number(general_config["version"])
 
         # Get data configuration parameters
