@@ -1,4 +1,4 @@
-version = "v0.2"
+version = "v0.3"
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [data_parameters]

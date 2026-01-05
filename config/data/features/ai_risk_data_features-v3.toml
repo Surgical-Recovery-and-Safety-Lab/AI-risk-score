@@ -16,7 +16,10 @@ feature_list = [
   "TRAUMA",
   "OP_YEAR",
   "MORTALITY_30D",
-  "CARDIAC_ARREST",
-  "HAEMORRHAGE",
+  "ANY_COMP",
+  "SHOCK",
+  "RESPIRATORY_FAILURE",
   "SEPSIS",
+  "STROKE",
+  "CARDIAC_ARREST",
 ]
