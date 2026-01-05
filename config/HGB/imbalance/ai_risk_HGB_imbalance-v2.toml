@@ -1,5 +1,5 @@
 [weighting]
-weighting_fn = "inverse_frequency_sum_sample_weights"
+weighting_fn = "inverse_frequency_single_sample_weights"
 
 [sampler]
 sampler_fn = ""
