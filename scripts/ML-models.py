@@ -135,8 +135,12 @@ if __name__ == "__main__":
     # Compute statistics and plots
     try:
         print_message("Computing model statistics", logger, script_name)
-        ci_dict = compute_all_CI(pipeline.predictor_metrics)
-        ci_calib_dict = compute_all_CI(pipeline.calibrator_metrics)
+        ci_dict = compute_all_CI(
+            pipeline.predictor_metrics, ["accuracy", "auroc", "ap", "log_loss"]
+        )
+        ci_calib_dict = compute_all_CI(
+            pipeline.calibrator_metrics, ["accuracy", "auroc", "ap", "log_loss"]
+        )
 
         print_message("Uncalibrated statistics", logger, script_name)
         print_metrics_CI(ci_dict, pipeline.label_list, logger)
