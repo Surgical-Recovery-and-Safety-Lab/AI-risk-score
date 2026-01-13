@@ -1,10 +1,10 @@
-version = "v0.2.1.1-b.2.2.2"
-model_type = "nn"
+version = "v0.2.1.1-b.2.2.2.2"
+predictor_type = "nn"
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [model_parameters]
 dir = "config/NN/"
-subfolders = [ "labels", "imbalance", "hyperparameters", "architecture" ]
+subfolders = [ "labels", "imbalance", "calibrator", "hyperparameters", "architecture" ]
 name = "ai_risk_NN_"
 extension = ".toml"
 
