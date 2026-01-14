@@ -175,8 +175,10 @@ if __name__ == "__main__":
             extension=extension,
         )
 
-        y_pred_proba = pipeline.predict_proba(X_test, "predictor")
-        y_pred_proba_calib = pipeline.predict_proba(X_test, "calibrator")
+        y_pred_proba = pipeline.predict_proba(X_test, idx=-1, model_type="predictor")
+        y_pred_proba_calib = pipeline.predict_proba(
+            X_test, idx=-1, model_type="calibrator"
+        )
 
         plot_prediction_distribution(
             get_positive_proba(y_pred_proba),
