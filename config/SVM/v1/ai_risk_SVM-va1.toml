@@ -1,5 +1,0 @@
-[config_parameters]
-kernel = "linear"
-probability = true
-C = 1.0
-class_weight = "balanced"

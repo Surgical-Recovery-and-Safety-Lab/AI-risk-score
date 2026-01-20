@@ -1,4 +1,0 @@
-[calibrator]
-calibrator_type = "logistic"
-
-[calibrator.hyperparameters]
