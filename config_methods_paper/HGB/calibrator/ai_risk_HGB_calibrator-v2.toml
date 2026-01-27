@@ -1,0 +1,5 @@
+[calibrator]
+calibrator_type = "isotonic"
+
+[calibrator.hyperparameters]
+out_of_bounds = "clip"

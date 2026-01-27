@@ -1,0 +1,7 @@
+[weighting]
+weighting_fn = ""
+
+[sampler]
+sampler_fn = "group_mean_dist_sampler"
+target_ratio = 0.5
+hard_percent = 0.25

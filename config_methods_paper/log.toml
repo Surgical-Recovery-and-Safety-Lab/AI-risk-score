@@ -1,0 +1,5 @@
+version = "v0.0.2"
+base_dir = "/home/mroe734/Documents/srs/"
+log_dir = "AI-risk-score/logs"
+log_message = "Exception raised in "
+print_message = "[ERROR] An exception was raised.\n\nCheck logs "

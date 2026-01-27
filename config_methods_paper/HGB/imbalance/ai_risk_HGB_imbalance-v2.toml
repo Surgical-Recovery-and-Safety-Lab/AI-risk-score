@@ -1,0 +1,7 @@
+[weighting]
+weighting_fn = "inverse_frequency_single_sample_weights"
+
+[sampler]
+sampler_fn = ""
+target_ratio = 0.5
+hard_percent = 0.25

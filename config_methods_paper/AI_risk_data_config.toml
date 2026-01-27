@@ -1,0 +1,8 @@
+version = "v0.1"
+base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
+
+[data_parameters]
+dir = "config_methods_paper/data/"
+subfolders = [ "general", "features" ]
+name = "ai_risk_data_"
+extension = ".toml"
