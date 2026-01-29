@@ -2,6 +2,7 @@
 weighting_fn = ""
 
 [sampler]
-sampler_fn = "group_random_oversampler"
+sampler_fn = "group_smote"
+k_neighbors = 5
 target_ratio = 0.5
 hard_percent = 0.25

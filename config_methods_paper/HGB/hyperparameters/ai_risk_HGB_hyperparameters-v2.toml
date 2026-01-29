@@ -1,0 +1,8 @@
+[hyperparameters]
+learning_rate = 0.05
+l2_regularization = 0.0
+max_leaf_nodes = 50
+min_samples_leaf = 100
+max_iter = 200
+early_stopping = true
+loss = "log_loss"
