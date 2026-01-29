@@ -19,6 +19,7 @@ def plot_reliability_diagrams(
     y_pred_proba=[],
     y_pred_proba_calib=[],
     label_list=[],
+    title=[],
     save_path="",
     extension=".png",
     display_kwargs={},
@@ -56,7 +57,6 @@ def plot_reliability_diagrams(
     """
     n_classes = len(y_pred_proba)  # Default number of classes
     colours = ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"]
-    labels = ["Original", "CSL", "SMOTE", "ROS", "RUS"]
 
     # Split arguments based on where they should be sent
     ax_kwargs = {key: value for key, value in kwargs.items() if key in dir(Axes)}
@@ -83,7 +83,7 @@ def plot_reliability_diagrams(
             prob_true,
             marker=".",
             color=colours[i],
-            label=labels[i],
+            label=label_list[i],
         )
 
         prob_true, prob_pred = calibration_curve(
@@ -98,11 +98,12 @@ def plot_reliability_diagrams(
             linestyle="--",
             marker=".",
             color=colours[i],
-            label="Re-calibrated " + labels[i],
+            label="Re-calibrated " + label_list[i],
         )
 
     ax.set_xlabel("Predicted probabilities", fontweight="bold")
     ax.set_ylabel("Observed proportion", fontweight="bold")
+    ax.set_title(title[0], fontweight="bold")
 
     # Set ax_kwargs to override if needed
     for key, val in ax_kwargs.items():
@@ -111,12 +112,12 @@ def plot_reliability_diagrams(
     plt.gca().spines["top"].set_visible(False)
     plt.gca().spines["right"].set_visible(False)
 
-    ax.legend(loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Models")
+    ax.legend(loc="upper right", bbox_to_anchor=(1.6, 0.9), title=title[1])
     plt.tight_layout()
     fig.subplots_adjust(right=0.66, bottom=0.14)
 
     if save_path:
-        save_file = save_path + f"_{label_list}" + extension
+        save_file = save_path + f"_{label_list[-1]}" + extension
         plt.savefig(save_file)
 
 
@@ -129,12 +130,7 @@ if __name__ == "__main__":
         metavar="model-config-file",
         help="Path to the general configuration file",
     )
-    parser.add_argument(
-        "version_numbers",
-        metavar="version-numbers",
-        help="Version numbe_rs to run",
-        nargs="+",
-    )
+    parser.add_argument("method", help="Method used")
 
     args = parser.parse_args()
 
@@ -149,6 +145,59 @@ if __name__ == "__main__":
 
     extension = general_config["fig_parameters"]["extension"]
     ext = ["_MORTALITY_90D", "_ANY_COMP"]
+    versions = {
+        "CSL": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.2.2.2",
+        ],
+        "SMOTE": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.9.2.2",
+            "v0.1.1.1-a.8.2.2",
+            "v0.1.1.1-a.7.2.2",
+            "v0.1.1.1-a.10.2.2",
+        ],
+        "ROS": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.5.2.2",
+            "v0.1.1.1-a.4.2.2",
+            "v0.1.1.1-a.3.2.2",
+            "v0.1.1.1-a.6.2.2",
+        ],
+        "RUS": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.13.2.2",
+            "v0.1.1.1-a.12.2.2",
+            "v0.1.1.1-a.11.2.2",
+            "v0.1.1.1-a.14.2.2",
+        ],
+    }
+    if args.method == "CSL":
+        label_list = (
+            ["Baseline", "CSL"],
+            ["Baseline", "CSL"],
+        )
+        title = ["CSL", "Models"]
+    else:
+        label_list = (
+            [
+                "IR = 73.2",
+                "IR = 54.9",
+                "IR = 36.6",
+                "IR = 18.3",
+                "IR = 1.0",
+                ext[0],
+            ],
+            [
+                "IR = 9.6",
+                "IR = 7.2",
+                "IR = 4.8",
+                "IR = 2.4",
+                "IR = 1.0",
+                ext[1],
+            ],
+        )
+        title = [args.method, "Imbalance ratio"]
     save_file = get_file_path(
         general_config,
         v_number="",
@@ -159,7 +208,7 @@ if __name__ == "__main__":
     for i in range(2):
         y_pred_proba = []
         y_pred_proba_calib = []
-        for version in args.version_numbers:
+        for version in versions[args.method]:
             # Swap version numbers if overloading
             general_config["version"] = version
             print_message(
@@ -200,8 +249,9 @@ if __name__ == "__main__":
             y_test[:, i],
             y_pred_proba,
             y_pred_proba_calib,
-            label_list=pipeline.label_list[i],
-            save_path=save_file + "_reliability_diagram",
+            label_list=label_list[i],
+            title=title,
+            save_path=save_file + f"{args.method}_reliability_diagram" + ext[i],
             extension=extension,
             display_kwargs={"n_bins": 10, "strategy": "quantile"},
             dpi=300,

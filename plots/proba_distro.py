@@ -2,7 +2,6 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from pyrisk.data.preprocessing import extract_labels
 from pyrisk.metrics.core import compute_all_CI, compute_score_metrics, print_metrics_CI
@@ -15,7 +14,9 @@ from pyrisk.utils.logger import print_message
 
 def plot_prediction_distribution(
     y_pred_proba=[],
+    title=[],
     label_list=[],
+    colours=[],
     n_bins=10,
     save_path="",
     extension=".png",
@@ -54,7 +55,6 @@ def plot_prediction_distribution(
         If y_pred_proba and y_pred_proba_calib are both empty.
 
     """
-    colours = ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"]
 
     # Split arguments based on where they should be sent
     fig_kwargs = {key: value for key, value in kwargs.items() if key in dir(Figure)}
@@ -68,7 +68,7 @@ def plot_prediction_distribution(
 
     ax.hist(
         y_pred_proba,
-        color=(colours, 0.8),
+        color=colours,
         stacked=True,
         edgecolor="black",
         bins=bins,
@@ -76,11 +76,12 @@ def plot_prediction_distribution(
     )
     plt.gca().spines["top"].set_visible(False)
     plt.gca().spines["right"].set_visible(False)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 0.9), title="Model")
-    plt.tight_layout()
-    fig.subplots_adjust(right=0.7, bottom=0.14)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.45, 0.9), title=title[1])
     ax.set_ylim([1, 1e6])
     ax.set_xlim([-0.05, 1.05])
+    ax.set_title(title[0], fontweight="bold")
+    plt.tight_layout()
+    fig.subplots_adjust(right=0.7, bottom=0.14)
 
     if save_path:
         save_file = save_path + extension
@@ -96,12 +97,7 @@ if __name__ == "__main__":
         metavar="model-config-file",
         help="Path to the general configuration file",
     )
-    parser.add_argument(
-        "version_numbers",
-        metavar="version-numbers",
-        help="Version numbe_rs to run",
-        nargs="+",
-    )
+    parser.add_argument("method", help="Method used")
 
     args = parser.parse_args()
 
@@ -123,27 +119,113 @@ if __name__ == "__main__":
 
     extension = general_config["fig_parameters"]["extension"]
     ext = ["_MORTALITY_90D", "_ANY_COMP"]
-    label_list = {
-        "predictor": ["Original", "CSL", "SMOTE", "ROS", "RUS"],
-        "calibrator": ["Original", "CSL", "SMOTE", "ROS", "RUS"],
+    colours = {
+        "CSL": ["#99C7E0", "#2D90D8"],
+        "ROS": ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"],
+        "RUS": ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"],
+        "SMOTE": ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"],
     }
-
-    """
-    label_list = {
-        "predictor": ["Original", "CSL", "SMOTE", "ROS", "RUS"],
-        "calibrator": [
-            "Re-calibrated original",
-            "Re-calibrated CSL",
-            "Re-calibrated SMOTE",
-            "Re-calibrated ROS",
-            "Re-calibrated RUS",
+    versions = {
+        "CSL": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.2.2.2",
+        ],
+        "SMOTE": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.9.2.2",
+            "v0.1.1.1-a.8.2.2",
+            "v0.1.1.1-a.7.2.2",
+            "v0.1.1.1-a.10.2.2",
+        ],
+        "ROS": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.5.2.2",
+            "v0.1.1.1-a.4.2.2",
+            "v0.1.1.1-a.3.2.2",
+            "v0.1.1.1-a.6.2.2",
+        ],
+        "RUS": [
+            "v0.1.1.1-a.1.2.2",
+            "v0.1.1.1-a.13.2.2",
+            "v0.1.1.1-a.12.2.2",
+            "v0.1.1.1-a.11.2.2",
+            "v0.1.1.1-a.14.2.2",
         ],
     }
-    """
+
+    label_list = {
+        "CSL": (
+            [
+                "Baseline",
+                "CSL",
+                "Models",
+            ],
+            [
+                "Baseline",
+                "CSL",
+                "Models",
+            ],
+        ),
+        "ROS": (
+            [
+                "IR = 73.2",
+                "IR = 54.9",
+                "IR = 36.6",
+                "IR = 18.3",
+                "IR = 1.0",
+                "Imbalance ratios",
+            ],
+            [
+                "IR = 9.6",
+                "IR = 7.2",
+                "IR = 4.8",
+                "IR = 2.4",
+                "IR = 1.0",
+                "Imbalance ratios",
+            ],
+        ),
+        "RUS": (
+            [
+                "IR = 73.2",
+                "IR = 54.9",
+                "IR = 36.6",
+                "IR = 18.3",
+                "IR = 1.0",
+                "Imbalance ratios",
+            ],
+            [
+                "IR = 9.6",
+                "IR = 7.2",
+                "IR = 4.8",
+                "IR = 2.4",
+                "IR = 1.0",
+                "Imbalance ratios",
+            ],
+        ),
+        "SMOTE": (
+            [
+                "IR = 73.2",
+                "IR = 54.9",
+                "IR = 36.6",
+                "IR = 18.3",
+                "IR = 1.0",
+                "Imbalance ratios",
+            ],
+            [
+                "IR = 9.6",
+                "IR = 7.2",
+                "IR = 4.8",
+                "IR = 2.4",
+                "IR = 1.0",
+                "Imbalance ratios",
+            ],
+        ),
+    }
+
     for model in models:
         for i in range(2):
             proba_distro = []
-            for version in args.version_numbers:
+            for version in versions[args.method]:
                 # Swap version numbers if overloading
                 general_config["version"] = version
                 print_message(
@@ -182,8 +264,10 @@ if __name__ == "__main__":
 
             plot_prediction_distribution(
                 proba_distro,
-                label_list=label_list[model],
-                save_path=save_file + "_proba_dist_" + model + ext[i],
+                label_list=label_list[args.method][i],
+                colours=colours[args.method],
+                title=[args.method, label_list[args.method][i][-1]],
+                save_path=save_file + f"{args.method}_proba_dist_" + model + ext[i],
                 extension=extension,
                 n_bins=20,
                 dpi=300,

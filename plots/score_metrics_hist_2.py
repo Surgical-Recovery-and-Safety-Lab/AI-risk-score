@@ -17,7 +17,7 @@ def plot_metrics_CI(
     ci_dict,
     y,
     label_list,
-    jit,
+    bar_width,
     save_path="",
     extension=".png",
     **kwargs,
@@ -49,78 +49,106 @@ def plot_metrics_CI(
         Nothing is returned.
 
     """
+    n_it = len(label_list)  # Number of iterations
+
     # Split arguments based on where they should be sent
     ax_kwargs = {key: value for key, value in kwargs.items() if key in dir(Axes)}
     fig_kwargs = {key: value for key, value in kwargs.items() if key in dir(Figure)}
 
     # Set up the figure and axis
-    fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, sharey=True, **fig_kwargs)
+    fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, **fig_kwargs)
     colours = ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"]
-    markers = ["x", "+", "."]
+    index = np.arange(len(ci_dict.keys()))
     y_labels = ["AUROC", "AUPRC", "Log loss"]
 
     # Loop through each metric
     for i, values in enumerate(ci_dict.values()):
-        # Plot Baselines as reference lines
+        ax[i].bar(  # Plot original model
+            y[0] + bar_width * 0.5,
+            values[0][0],
+            bar_width,
+            color=colours[0],
+            edgecolor=(0, 0, 0, 1),
+            label=label_list[0],
+        )
+        # Error bars for confidence interval
         ax[i].errorbar(
-            y[0],
+            y[0] + bar_width * 0.5,
             values[0][0],
             yerr=values[0][0] - values[1][0],
-            color=colours[0],
-            linestyle="",
-            marker="*",
-            label=label_list[0],
-            zorder=5,
+            fmt="none",
+            color="black",
+            capsize=2,
         )
+        ax[i].bar(  # Plot CSL model
+            y[0] - bar_width * 0.5,
+            values[0][1],
+            bar_width,
+            color=colours[1],
+            edgecolor=(0, 0, 0, 1),
+            label=label_list[1],
+        )
+        # Error bars for confidence interval
         ax[i].errorbar(
-            y[0],
+            y[0] - bar_width * 0.5,
             values[0][1],
             yerr=values[0][1] - values[1][1],
-            color=colours[1],
-            marker="d",
-            linestyle="",
-            label=label_list[1],
-            zorder=4,
+            fmt="none",
+            color="black",
+            capsize=2,
         )
+        start = 2
+        end = 6
+        y_bar = y[1:] + bar_width
         for j in range(3):
-            jitter = np.random.uniform(-jit, jit, 4)
-            start = 2 + j * 4
-            end = 2 + (j + 1) * 4
             value = values[0][start:end]
             lower_b = values[1][start:end]
-            ax[i].errorbar(
-                y[1:] + jitter,
+            ax[i].bar(
+                y_bar,
                 value,
-                yerr=value - lower_b,
-                linestyle="",
-                marker=markers[j],
+                width=bar_width,
                 color=colours[j + 2],
+                edgecolor=(0, 0, 0, 1),
                 label=label_list[j + 2],
-                alpha=0.8,
             )
 
+            ax[i].errorbar(
+                y_bar,
+                value,
+                yerr=value - lower_b,
+                fmt="none",
+                color="black",
+                capsize=2,
+            )
             # Customize the chart
             ax[i].set_ylabel(y_labels[i], fontweight="bold")
             ax[i].set_ylim(ymin=0, ymax=1)
+            if i == 2:
+                ax[i].set_ylim(ymin=0, ymax=0.55)
             ax[i].spines["top"].set_visible(False)
             ax[i].spines["right"].set_visible(False)
 
-    # Set ax_kwargs to override if needed
+            start = end
+            end += 4
+            y_bar -= bar_width
+    # Set the x-ticks to be at the center of each group of bars
     ax[-1].set_xlabel("Imbalance ratio", fontweight="bold")
+    ax[-1].set_xticks(y)
+    ax[-1].set_xticklabels(y)
 
     # Place one legend for the whole figure
     handles, labels = ax[0].get_legend_handles_labels()
     fig.legend(
         handles, labels, loc="center right", bbox_to_anchor=(0.98, 0.5), title="Methods"
     )
+
+    # Set ax_kwargs to override if needed
     for key, val in ax_kwargs.items():
         getattr(ax, key)(val)
 
     plt.gca().invert_xaxis()
-
-    # ax.legend(title="Model", loc="upper right", bbox_to_anchor=(1.7, 0.9))
     plt.tight_layout()
-    fig.subplots_adjust(right=0.6)
+    fig.subplots_adjust(right=0.75)
 
     if save_path:
         save_file = save_path + extension
@@ -141,14 +169,14 @@ if __name__ == "__main__":
     versions = [
         "v0.1.1.1-a.1.2.2",
         "v0.1.1.1-a.2.2.2",
-        "v0.1.1.1-a.5.2.2",
-        "v0.1.1.1-a.4.2.2",
-        "v0.1.1.1-a.3.2.2",
-        "v0.1.1.1-a.6.2.2",
         "v0.1.1.1-a.9.2.2",
         "v0.1.1.1-a.8.2.2",
         "v0.1.1.1-a.7.2.2",
         "v0.1.1.1-a.10.2.2",
+        "v0.1.1.1-a.5.2.2",
+        "v0.1.1.1-a.4.2.2",
+        "v0.1.1.1-a.3.2.2",
+        "v0.1.1.1-a.6.2.2",
         "v0.1.1.1-a.13.2.2",
         "v0.1.1.1-a.12.2.2",
         "v0.1.1.1-a.11.2.2",
@@ -171,7 +199,7 @@ if __name__ == "__main__":
     extension = general_config["fig_parameters"]["extension"]
     ext = ["_MORTALITY_90D", "_ANY_COMP"]
     y = ([73.2, 54.9, 36.3, 18.3, 1.0], [9.6, 7.2, 4.8, 2.4, 1.0])
-    jit = [0, 0]
+    bar_width = [4.5, 0.35]
 
     for i in range(2):
         metric_dict = {}
@@ -233,9 +261,9 @@ if __name__ == "__main__":
         ci_dict_cal = compute_all_CI(metric_dict_cal)
         plot_metrics_CI(
             ci_dict,
-            y[i],
-            ["Original", "CSL", "ROS", "SMOTE", "RUS"],
-            jit=jit[i],
+            np.array(y[i]),
+            ["Original", "CSL", "SMOTE", "ROS", "RUS"],
+            bar_width=bar_width[i],
             dpi=300,
             figsize=(5, 5),
             save_path=save_file + ext[i] + "_OG",
@@ -243,9 +271,9 @@ if __name__ == "__main__":
         )
         plot_metrics_CI(
             ci_dict_cal,
-            y[i],
-            ["Original", "CSL", "ROS", "SMOTE", "RUS"],
-            jit=jit[i],
+            np.array(y[i]),
+            ["Original", "CSL", "SMOTE", "ROS", "RUS"],
+            bar_width=bar_width[i],
             dpi=300,
             figsize=(5, 5),
             save_path=save_file + ext[i] + "_recal",
