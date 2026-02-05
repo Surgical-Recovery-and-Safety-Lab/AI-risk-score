@@ -2,6 +2,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from matplotlib.figure import Figure
 from pyrisk.data.preprocessing import extract_labels
 from pyrisk.metrics.core import compute_all_CI, compute_score_metrics, print_metrics_CI
@@ -120,10 +121,10 @@ if __name__ == "__main__":
     extension = general_config["fig_parameters"]["extension"]
     ext = ["_MORTALITY_90D", "_ANY_COMP"]
     colours = {
-        "CSL": ["#99C7E0", "#2D90D8"],
-        "ROS": ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"],
-        "RUS": ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"],
-        "SMOTE": ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"],
+        "CSL": ["#2D90D8", "#33367A"],
+        "ROS": ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F"],
+        "RUS": ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F"],
+        "SMOTE": ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F"],
     }
     versions = {
         "CSL": [
@@ -254,7 +255,9 @@ if __name__ == "__main__":
                 )
                 pipeline = load_pipeline(load_file)
                 data = pipeline.transform(data)
-                _, X_test = pipeline.get_test_data(data)
+                X_train, X_test_24 = pipeline.get_test_data(data)
+                _, X_test_23 = pipeline.get_test_data(X_train)
+                X_test = pd.concat((X_test_24, X_test_23))
                 X_test, y_test = extract_labels(X_test, pipeline.label_list)
                 proba_distro.append(
                     get_positive_proba(
