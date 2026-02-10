@@ -1,4 +1,4 @@
-version = "v0.3.1.3-d.4.2.2"
+version = "v0.4.1.4-d.1.3.2"
 predictor_type = "hgb"
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
@@ -9,7 +9,7 @@ name = "ai_risk_HGB_"
 extension = ".toml"
 
 [io_parameters]
-dir = "models/"
+dir = "models/HGB_methods_paper/"
 name = "ai_risk_HGB-"
 extension = ".pkl"
 
