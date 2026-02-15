@@ -1,25 +1,25 @@
-version = "v0.4.1.4-d.1.3.2"
+version = "v0.1.1.1-a.1.2.2"
 predictor_type = "hgb"
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [model_parameters]
-dir = "config/HGB/"
+dir = "config/methods_paper/HGB/"
 subfolders = [ "labels", "imbalance", "hyperparameters", "calibrator" ]
 name = "ai_risk_HGB_"
 extension = ".toml"
 
 [io_parameters]
-dir = "models/HGB_methods_paper/"
-name = "ai_risk_HGB-"
+dir = "models/methods_paper/"
+name = "ai_risk_HGB_methods_paper-"
 extension = ".pkl"
 
 [fig_parameters]
-dir = "figures/"
+dir = "figures/methods_paper/"
 name = "ai_risk_HGB_"
 extension = ".png"
 
 [data_parameters]
-dir = "config/data/"
+dir = "config/methods_paper/data/"
 subfolders = [ "general", "features", "splitting", "preprocessing" ]
 name = "ai_risk_data_"
 extension = ".toml"

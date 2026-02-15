@@ -1,0 +1,30 @@
+[preprocessing]
+preprocess = true # Perform preprocessing if true
+
+[preprocessing.ordinal_encoder]
+# List of features to label encode
+feature_list = [
+  "SEX_ORIGINAL",
+  "GCH2018_ORIGINAL",
+  "ETHNICITY_ORIGINAL",
+  "ADMISSION_ACUITY",
+  "ADMISSION_SOURCE",
+  "CATEGORY_LEVEL_1",
+]
+
+[preprocessing.standardise]
+# List of features to standardise
+feature_list = [
+  "AGE",
+  "GCH2018_ORIGINAL",
+  "ETHNICITY_ORIGINAL",
+  "ADMISSION_ACUITY",
+  "ADMISSION_SOURCE",
+  "CATEGORY_LEVEL_1",
+]
+
+[preprocessing.bin]
+# List of features to power transform
+feature_list = [
+  "M3_SCORE",
+]

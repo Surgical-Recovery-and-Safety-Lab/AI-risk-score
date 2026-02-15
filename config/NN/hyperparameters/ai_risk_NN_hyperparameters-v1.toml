@@ -1,6 +1,0 @@
-[hyperparameters]
-loss_name = "BCEWithLogitsLoss"
-optim_name = "Adam"
-epochs = 50
-batch_size = 64
-lr = 0.001

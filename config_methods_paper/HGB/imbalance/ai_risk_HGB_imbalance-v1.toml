@@ -1,7 +1,0 @@
-[weighting]
-weighting_fn = ""
-
-[sampler]
-sampler_fn = ""
-target_ratio = 0.5
-hard_percent = 0.25
