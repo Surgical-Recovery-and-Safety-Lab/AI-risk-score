@@ -1,12 +1,12 @@
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [io_parameters]
-dir = "methods_paper/data_methods_paper/processed/"
+dir = "data/methods_paper/processed/"
 name = "ai_risk_data-"
 extension = ".csv"
 
 [db_parameters]
-dir = "methods_paper/data_methods_paper/raw/"
+dir = "data/methods_paper/raw/"
 name = "nz_hospital"
 table_name = "main"
 extension = ".db"
