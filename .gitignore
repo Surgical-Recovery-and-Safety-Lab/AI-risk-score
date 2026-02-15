@@ -1,7 +1,5 @@
 # Ignore data folder
-data/
-data_methods_paper/
-!config/data
+data/*
 
 # Ignore generated figures
 figures/
