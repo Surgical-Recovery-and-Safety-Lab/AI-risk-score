@@ -2,11 +2,6 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes._axes import Axes
-from matplotlib.figure import Figure
-from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_all_CI, compute_score_metrics, print_metrics_CI
-from pyrisk.models.core import get_full_proba, load_pipeline
 from pyrisk.pipeline.Pipeline import Pipeline
 from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
 from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
@@ -21,11 +16,10 @@ def plt_hist(operation_years):
     bins = np.arange(min(operation_years), max(operation_years) + 2) - 0.5
 
     # Plotting the histogram
-    colours = ["#99C7E0", "#2D90D8", "#1D6968", "#33367A", "#96690E"]
     plt.hist(
         operation_years,
         bins=bins,
-        color=colours[0],
+        color="#99C7E0",
         edgecolor="black",
         linewidth=1.2,
         label="Patient count",

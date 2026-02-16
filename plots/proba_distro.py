@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_all_CI, compute_score_metrics, print_metrics_CI
 from pyrisk.models.core import get_positive_proba, load_pipeline
 from pyrisk.pipeline.Pipeline import Pipeline
 from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
@@ -28,12 +27,12 @@ def plot_prediction_distribution(
 
     Parameters
     ----------
-    y_pred_proba : array-like of shape (n_samples, n_classes), default: []
+    y_pred_proba : list[array]
         Predicted probabilities from the predictor.
-    y_pred_proba_calib : array-like of shape (n_samples, n_classes), default: []
-        Predicted probabilities from the calibrator.
     label_list : list[str], default: []
         List of predicted labels.
+    colours : list[str]
+        List of colours to plot with.
     n_bins : int, default: 10
         Number of bins for the histogram.
     save_path : str, default: []
@@ -90,9 +89,7 @@ def plot_prediction_distribution(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
-    )
+    parser = argparse.ArgumentParser(description="Plot probability distributions.")
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
@@ -119,7 +116,7 @@ if __name__ == "__main__":
     )
 
     extension = general_config["fig_parameters"]["extension"]
-    ext = ["_MORTALITY_90D", "_ANY_COMP"]
+    ext = ["MORTALITY_90D", "ANY_COMP"]
     colours = {
         "CSL": ["#2D90D8", "#33367A"],
         "ROS": ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F"],
@@ -224,7 +221,7 @@ if __name__ == "__main__":
     }
 
     for model in models:
-        for i in range(2):
+        for i, outcome in enumerate(ext):
             proba_distro = []
             for version in versions[args.method]:
                 # Swap version numbers if overloading
@@ -261,7 +258,7 @@ if __name__ == "__main__":
                 X_test, y_test = extract_labels(X_test, pipeline.label_list)
                 proba_distro.append(
                     get_positive_proba(
-                        pipeline.predict_proba(X_test, i, model)
+                        pipeline.predict_proba(X_test, outcome, model)
                     ).squeeze()
                 )
 
@@ -270,7 +267,7 @@ if __name__ == "__main__":
                 label_list=label_list[args.method][i],
                 colours=colours[args.method],
                 title=[args.method, label_list[args.method][i][-1]],
-                save_path=save_file + f"{args.method}_proba_dist_" + model + ext[i],
+                save_path=save_file + f"{args.method}_proba_dist_{model}_{outcome}",
                 extension=extension,
                 n_bins=20,
                 dpi=300,

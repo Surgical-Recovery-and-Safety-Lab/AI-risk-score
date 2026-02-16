@@ -1,21 +1,16 @@
 import argparse
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_pred_metrics, compute_score_metrics
 from pyrisk.models.core import get_positive_proba, load_pipeline
 from pyrisk.pipeline.Pipeline import Pipeline
 from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
 from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
 from pyrisk.utils.logger import print_message
-from sklearn.metrics import confusion_matrix
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
-    )
+    parser = argparse.ArgumentParser(description="Run the test scenario numbers")
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
@@ -38,8 +33,7 @@ if __name__ == "__main__":
     general_config = read_toml_configuration(args.model_config_file)
     logger = None
     script_name = ""
-    i = 0  # 0: MORTALITY_90D, 1: ANY_COMP
-    label = ["MORTALITY_90D", "ANY_COMP"]
+    outcome = ["MORTALITY_90D", "ANY_COMP"]
     methods = ["Original", "CSL", "SMOTE", "ROS", "RUS"]
 
     for k, version in enumerate(versions):
@@ -80,15 +74,15 @@ if __name__ == "__main__":
 
         for i in range(2):
             y_pred_proba[:, i] = get_positive_proba(
-                pipeline.predict_proba(X_test, i, "predictor")
+                pipeline.predict_proba(X_test, outcome[i], "predictor")
             ).squeeze()
             decisions[:, i] = np.array(y_pred_proba[:, i] > thresholds[i])
 
             if k == 0:
                 orig_decisions = decisions
             print(
-                f"{methods[k]} {label[i]} % risky surgeries: {100*np.sum(decisions[:, i])/len(decisions):.1f}"
+                f"{methods[k]} {outcome[i]} % risky surgeries: {100*np.sum(decisions[:, i])/len(decisions):.1f}"
             )
             print(
-                rf"{methods[k]} {label[i]} $\Delta$% risky surgeries: {100*(np.sum(decisions[:, i])-np.sum(orig_decisions[:, i]))/len(decisions):.1f}"
+                rf"{methods[k]} {outcome[i]} $\Delta$% risky surgeries: {100*(np.sum(decisions[:, i])-np.sum(orig_decisions[:, i]))/len(decisions):.1f}"
             )

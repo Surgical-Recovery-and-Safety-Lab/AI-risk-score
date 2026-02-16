@@ -137,7 +137,7 @@ def plot_metrics_CI(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
+        description="Plots all metrics for balanced and unbalanced models."
     )
     parser.add_argument(
         "model_config_file",
@@ -160,7 +160,6 @@ if __name__ == "__main__":
     general_config = read_toml_configuration(args.model_config_file)
     logger = None
     script_name = ""
-    i = 0  # 0: MORTALITx_90D, 1: ANx_COMP
     save_file = get_file_path(
         general_config,
         v_number="",
@@ -168,7 +167,7 @@ if __name__ == "__main__":
         exists=False,
     )
     extension = general_config["fig_parameters"]["extension"]
-    ext = ["_MORTALITY_90D", "_ANY_COMP"]
+    outcomes = ["MORTALITY_90D", "ANY_COMP"]
     bar_width = 0.35
 
     for i in range(2):
@@ -205,17 +204,17 @@ if __name__ == "__main__":
             tmp_metric_dict = {}
             tmp_metric_dict_pred = {}
 
-            for key in pipeline.predictor_probabilities[i]:
+            for key in pipeline.predictor_probabilities[outcomes[i]]:
                 y_test = y_train[X_train["OP_YEAR"] == key]
                 tmp_metric_dict[key] = compute_score_metrics(
                     ["auroc", "ap", "log_loss"],
                     y_test[:, i],
-                    get_full_proba(pipeline.predictor_probabilities[i][key]),
+                    get_full_proba(pipeline.predictor_probabilities[outcomes[i]][key]),
                 )
                 tmp_metric_dict_pred[key] = compute_pred_metrics(
                     ["accuracy", "recall", "precision", "f1"],
                     y_test[:, i],
-                    pipeline.predictor_probabilities[i][key] > 0.5,
+                    pipeline.predictor_probabilities[outcomes[i]][key] > 0.5,
                 )
                 for k in tmp_metric_dict[key].keys():
                     if key not in metric_dict.keys():
@@ -235,6 +234,6 @@ if __name__ == "__main__":
             ["Original", "CSL", "SMOTE", "ROS", "RUS"],
             dpi=300,
             figsize=(6, 6),
-            save_path=save_file + ext[i] + "_metrics_OG",
+            save_path=save_file + f"_{outcomes[i]}_metrics_OG",
             extension=extension,
         )

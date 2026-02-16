@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_pred_metrics, compute_score_metrics
 from pyrisk.models.core import get_positive_proba, load_pipeline
 from pyrisk.pipeline.Pipeline import Pipeline
 from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
@@ -19,9 +18,7 @@ def net_benefit_fn(tp, fp, P, N):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
-    )
+    parser = argparse.ArgumentParser(description="Plot decision curves.")
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
@@ -44,7 +41,6 @@ if __name__ == "__main__":
     general_config = read_toml_configuration(args.model_config_file)
     logger = None
     script_name = ""
-    i = 0  # 0: MORTALITx_90D, 1: ANx_COMP
     save_file = get_file_path(
         general_config,
         v_number="",
@@ -52,7 +48,7 @@ if __name__ == "__main__":
         exists=False,
     )
     extension = general_config["fig_parameters"]["extension"]
-    ext = ["_MORTALITY_90D", "_ANY_COMP"]
+    outcomes = ["MORTALITY_90D", "ANY_COMP"]
     methods = ["Original", "CSL", "SMOTE", "ROS", "RUS"]
     colours = ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F", "#1D6968"]
     ylims = [(-0.0345, 0.0345), (-0.165, 0.165)]
@@ -105,7 +101,7 @@ if __name__ == "__main__":
 
             net_benefit = np.zeros(len(thresholds[i]))
             y_pred_proba = get_positive_proba(
-                pipeline.predict_proba(X_test, i, "predictor")
+                pipeline.predict_proba(X_test, outcomes[i], "predictor")
             ).squeeze()
 
             for j, threshold in enumerate(thresholds[i]):
@@ -142,8 +138,7 @@ if __name__ == "__main__":
         plt.gca().spines["top"].set_visible(False)
         plt.gca().spines["right"].set_visible(False)
 
-        # ax.legend(loc="upper right", bbox_to_anchor=(1.5, 1.5), title="Methods")
         plt.tight_layout()
 
-        save_path = save_file + f"_decision_curve{ext[i]}" + extension
+        save_path = save_file + f"_decision_curve_{outcomes[i]}" + extension
         plt.savefig(save_path)

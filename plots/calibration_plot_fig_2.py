@@ -6,7 +6,6 @@ import pandas as pd
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_all_CI, compute_score_metrics, print_metrics_CI
 from pyrisk.models.core import get_positive_proba, load_pipeline
 from pyrisk.pipeline.Pipeline import Pipeline
 from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
@@ -32,10 +31,8 @@ def plot_reliability_diagrams(
     ----------
     y_test : array-like of shape (n_samples, n_classes)
         Ground truth labels.
-    y_pred_proba : array-like of shape (n_samples, n_classes), default: []
-        Predicted probabilities from the predictor.
-    y_pred_proba_calib : array-like of shape (n_samples, n_classes), default: []
-        Predicted probabilities from the calibrator.
+    y_pred_proba : list[array]
+        Predicted probabilities from the predictors.
     label_list : list[str], default: []
     save_path : str, default: []
         Path to the save file.
@@ -105,7 +102,7 @@ def plot_reliability_diagrams(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
+        description="Plots the calibration curves for Figure 2."
     )
     parser.add_argument(
         "model_config_file",
@@ -122,7 +119,6 @@ if __name__ == "__main__":
     logger = None
     script_name = ""
     metric_dict = {}
-    i = 0  # 0: MORTALITY_90D, 1: ANY_COMP
 
     extension = general_config["fig_parameters"]["extension"]
     ext = ["_MORTALITY_90D", "_ANY_COMP"]

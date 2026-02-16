@@ -6,7 +6,6 @@ import pandas as pd
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_all_CI, compute_score_metrics, print_metrics_CI
 from pyrisk.models.core import get_positive_proba, load_pipeline
 from pyrisk.pipeline.Pipeline import Pipeline
 from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
@@ -33,10 +32,8 @@ def plot_reliability_diagrams(
     ----------
     y_test : array-like of shape (n_samples, n_classes)
         Ground truth labels.
-    y_pred_proba : array-like of shape (n_samples, n_classes), default: []
-        Predicted probabilities from the predictor.
-    y_pred_proba_calib : array-like of shape (n_samples, n_classes), default: []
-        Predicted probabilities from the calibrator.
+    y_pred_proba : list[array]
+        Predicted probabilities from the predictors.
     label_list : list[str], default: []
     save_path : str, default: []
         Path to the save file.
@@ -108,7 +105,7 @@ def plot_reliability_diagrams(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
+        description="Plots the calibration curves for Figure 4."
     )
     parser.add_argument(
         "model_config_file",
@@ -126,10 +123,9 @@ if __name__ == "__main__":
     logger = None
     script_name = ""
     metric_dict = {}
-    i = 0  # 0: MORTALITY_90D, 1: ANY_COMP
 
     extension = general_config["fig_parameters"]["extension"]
-    ext = ["_MORTALITY_90D", "_ANY_COMP"]
+    outcomes = ["MORTALITY_90D", "ANY_COMP"]
     versions = {
         "CSL": [
             "v0.1.1.1-a.1.2.2",
@@ -171,7 +167,7 @@ if __name__ == "__main__":
                 "IR = 36.6",
                 "IR = 18.3",
                 "IR = 1.0",
-                ext[0],
+                outcomes[0],
             ],
             [
                 "IR = 9.6",
@@ -179,7 +175,7 @@ if __name__ == "__main__":
                 "IR = 4.8",
                 "IR = 2.4",
                 "IR = 1.0",
-                ext[1],
+                outcomes[1],
             ],
         )
         title = [args.method, "Imbalance ratio"]
@@ -225,7 +221,9 @@ if __name__ == "__main__":
             X_test = pd.concat((X_test_24, X_test_23))
             X_test, y_test = extract_labels(X_test, pipeline.label_list)
             y_pred_proba.append(
-                get_positive_proba(pipeline.predict_proba(X_test, i, "predictor"))
+                get_positive_proba(
+                    pipeline.predict_proba(X_test, outcomes[i], "predictor")
+                )
             )
 
         plot_reliability_diagrams(
@@ -233,7 +231,7 @@ if __name__ == "__main__":
             y_pred_proba,
             label_list=label_list[i],
             title=title,
-            save_path=save_file + f"{args.method}_reliability_diagram" + ext[i],
+            save_path=save_file + f"{args.method}_reliability_diagram_" + outcomes[i],
             extension=extension,
             display_kwargs={"n_bins": 10, "strategy": "quantile"},
             dpi=300,
