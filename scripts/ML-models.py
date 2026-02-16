@@ -11,13 +11,18 @@ import pathlib
 import sys
 
 from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_all_CI, print_metrics_CI
+from pyrisk.metrics.core import compute_all_CI, compute_score_metrics
 from pyrisk.metrics.plots import (
     plot_metrics_CI,
     plot_prediction_distribution,
     plot_reliability_diagrams,
 )
-from pyrisk.models.core import get_positive_proba, load_pipeline, save_pipeline
+from pyrisk.models.core import (
+    get_full_proba,
+    get_positive_proba,
+    load_pipeline,
+    save_pipeline,
+)
 from pyrisk.pipeline.Pipeline import Pipeline
 from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
 from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
@@ -117,6 +122,7 @@ if __name__ == "__main__":
                 v_number=general_config["version"],
             )
             pipeline = load_pipeline(load_file)
+            data = pipeline.preprocessor.transform(data)
             X_train, X_test = pipeline.get_test_data(data)
 
     except Exception:
@@ -125,8 +131,8 @@ if __name__ == "__main__":
 
     try:
         print_message("Preparing test set", logger, script_name)
-        X_test = pipeline.preprocessor.transform(X_test)
         X_test, y_test = extract_labels(X_test, pipeline.label_list)
+        X_train, y_train = extract_labels(X_train, pipeline.label_list)
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -135,19 +141,7 @@ if __name__ == "__main__":
     # Compute statistics and plots
     try:
         print_message("Computing model statistics", logger, script_name)
-        ci_dict = compute_all_CI(
-            pipeline.predictor_metrics, ["accuracy", "auroc", "ap", "log_loss"]
-        )
-        ci_calib_dict = compute_all_CI(
-            pipeline.calibrator_metrics, ["accuracy", "auroc", "ap", "log_loss"]
-        )
-
-        print_message("Uncalibrated statistics", logger, script_name)
-        print_metrics_CI(ci_dict, pipeline.label_list, logger)
-
-        print_message("Calibrated statistics", logger, script_name)
-        print_metrics_CI(ci_calib_dict, pipeline.label_list, logger)
-
+        group_name = data_config["split_variables"]["group_name"]
         save_file = get_file_path(
             general_config,
             v_number=general_config["version"],
@@ -155,57 +149,76 @@ if __name__ == "__main__":
             exists=False,
         )
         extension = general_config["fig_parameters"]["extension"]
+        label_list = ["Unadjusted", "Recalibrated"]
 
-        plot_metrics_CI(
-            ci_dict,
-            pipeline.label_list,
-            dpi=300,
-            figsize=(5, 5),
-            show_fig=args.no_plots,
-            save_path=save_file + "_metrics",
-            extension=extension,
-        )
-        plot_metrics_CI(
-            ci_calib_dict,
-            pipeline.label_list,
-            dpi=300,
-            figsize=(5, 5),
-            show_fig=args.no_plots,
-            save_path=save_file + "_calibrated_metrics",
-            extension=extension,
-        )
+        for i, label in enumerate(pipeline.label_list):
+            # Plot for each outcome individually
+            metric_dict = {}  # Store unadjusted values
+            metric_dict_cal = {}  # Store recalibrated values
 
-        y_pred_proba = pipeline.predict_proba(X_test, idx=-1, model_type="predictor")
-        y_pred_proba_calib = pipeline.predict_proba(
-            X_test, idx=-1, model_type="calibrator"
-        )
+            for key in pipeline.predictor_probabilities[label]:
+                # Compute metric values for both unadjusted and recalibrated
+                y_true = y_train[X_train[group_name] == key]
+                metric_dict[key] = compute_score_metrics(
+                    ["auroc", "ap", "log_loss"],
+                    y_true[:, i],
+                    get_full_proba(pipeline.predictor_probabilities[label][key]),
+                )
+                metric_dict_cal[key] = compute_score_metrics(
+                    ["auroc", "ap", "log_loss"],
+                    y_true[:, i],
+                    get_full_proba(pipeline.calibrator_probabilities[label][key]),
+                )
 
-        plot_prediction_distribution(
-            get_positive_proba(y_pred_proba),
-            get_positive_proba(y_pred_proba_calib),
-            label_list=pipeline.label_list,
-            save_path=save_file + "_proba_dist",
-            extension=extension,
-            show_fig=args.no_plots,
-            n_bins=50,
-            dpi=300,
-            figsize=(5, 5),
-        )
-        plot_reliability_diagrams(
-            y_test,
-            get_positive_proba(y_pred_proba),
-            get_positive_proba(y_pred_proba_calib),
-            label_list=pipeline.label_list,
-            save_path=save_file + "_reliability_diagram",
-            extension=extension,
-            show_fig=args.no_plots,
-            display_kwargs={"n_bins": 10, "strategy": "quantile"},
-            dpi=300,
-            figsize=(5, 5),
-        )
+                for k in metric_dict[key].keys():
+                    metric_dict[key][k] += metric_dict_cal[key][k]
 
-        # pyrisk.metrics.plots.plot_mean_ROC_curve(model_metrics, label_list)
-        # pyrisk.metrics.plots.plot_mean_PR_curve(model_metrics, label_list)
+            # Create one CI dict for both outcomes and plot results
+            ci_dict = compute_all_CI(metric_dict)
+            plot_metrics_CI(
+                ci_dict,
+                label_list=label_list,
+                dpi=300,
+                figsize=(5, 5),
+                save_path=save_file + f"_{label}_",
+                extension=extension,
+                show_fig=args.no_plots,
+            )
+
+            y_pred_proba = pipeline.predict_proba(
+                X_test, label_list=label, model_type="predictor"
+            )
+            y_pred_proba_calib = pipeline.predict_proba(
+                X_test, label_list=label, model_type="calibrator"
+            )
+
+            plot_prediction_distribution(
+                [
+                    get_positive_proba(y_pred_proba).squeeze(),
+                    get_positive_proba(y_pred_proba_calib).squeeze(),
+                ],
+                label_list=label_list,
+                save_path=save_file + f"_{label}_proba_dist",
+                extension=extension,
+                show_fig=args.no_plots,
+                n_bins=20,
+                dpi=300,
+                figsize=(5, 5),
+            )
+            plot_reliability_diagrams(
+                y_test[:, i],
+                [
+                    get_positive_proba(y_pred_proba).squeeze(),
+                    get_positive_proba(y_pred_proba_calib).squeeze(),
+                ],
+                label_list=label_list,
+                save_path=save_file + f"_{label}_reliability_diagram",
+                extension=extension,
+                show_fig=args.no_plots,
+                display_kwargs={"n_bins": 10, "strategy": "quantile"},
+                dpi=300,
+                figsize=(5, 5),
+            )
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
