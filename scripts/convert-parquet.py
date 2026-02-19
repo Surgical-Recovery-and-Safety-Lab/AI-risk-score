@@ -10,7 +10,8 @@ import argparse
 import pathlib
 import sys
 
-import pyrisk
+from medpipe import exception_handler, read_toml_configuration, setup_logger
+from medpipe.data.db import parquet_to_db
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert a parquet file to a db file")
@@ -35,13 +36,13 @@ if __name__ == "__main__":
 
     try:
         # Read log configuration file
-        log_config = pyrisk.utils.io.read_toml_configuration("../config/log.toml")
+        log_config = read_toml_configuration("../config/log.toml")
 
         # Create logger
         script_name = str(pathlib.Path(__file__).stem)
         log_dir = log_config["base_dir"] + log_config["log_dir"]
         log_dir = log_config["log_dir"]
-        logger = pyrisk.utils.logger.setup_logger(
+        logger = setup_logger(
             script_name,
             log_dir,
         )
@@ -51,7 +52,7 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        pyrisk.data.db.parquet_to_db(args.parquet_file, args.db_file, args.table_name)
+        parquet_to_db(args.parquet_file, args.db_file, args.table_name)
     except Exception:
-        pyrisk.utils.logger.exception_handler(logger, log_dir, log_config, script_name)
+        exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
