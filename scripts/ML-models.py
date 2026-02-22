@@ -10,23 +10,25 @@ import argparse
 import pathlib
 import sys
 
-from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import compute_all_CI, compute_score_metrics
-from pyrisk.metrics.plots import (
+from medpipe import (
+    Pipeline,
+    compute_all_CI,
+    compute_score_metrics,
+    exception_handler,
+    extract_labels,
+    get_full_proba,
+    get_positive_proba,
+    load_data_from_csv,
+    load_pipeline,
     plot_metrics_CI,
     plot_prediction_distribution,
     plot_reliability_diagrams,
-)
-from pyrisk.models.core import (
-    get_full_proba,
-    get_positive_proba,
-    load_pipeline,
+    print_message,
+    read_toml_configuration,
     save_pipeline,
+    setup_logger,
 )
-from pyrisk.pipeline.Pipeline import Pipeline
-from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
-from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
-from pyrisk.utils.logger import exception_handler, print_message, setup_logger
+from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -102,8 +104,7 @@ if __name__ == "__main__":
         )
 
         if not args.load:
-            pipeline.preprocessor.fit(data)
-            X_train, X_test = pipeline.get_test_data(data)
+            X_train, _ = pipeline.get_test_data(data)
             pipeline.run(X_train)
 
             print_message("Saving pipeline", logger, script_name)
@@ -122,8 +123,9 @@ if __name__ == "__main__":
                 v_number=general_config["version"],
             )
             pipeline = load_pipeline(load_file)
-            data = pipeline.preprocessor.transform(data)
-            X_train, X_test = pipeline.get_test_data(data)
+
+        data = pipeline.preprocessor.transform(data)
+        X_train, X_test = pipeline.get_test_data(data)
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -215,7 +217,7 @@ if __name__ == "__main__":
                 save_path=save_file + f"_{label}_reliability_diagram",
                 extension=extension,
                 show_fig=args.no_plots,
-                display_kwargs={"n_bins": 10, "strategy": "quantile"},
+                display_kwargs={"n_bins": 15, "strategy": "quantile"},
                 dpi=300,
                 figsize=(5, 5),
             )
