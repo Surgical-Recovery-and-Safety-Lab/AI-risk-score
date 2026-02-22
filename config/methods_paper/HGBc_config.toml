@@ -11,7 +11,7 @@ extension = ".toml"
 [io_parameters]
 dir = "models/methods_paper/"
 name = "ai_risk_HGBc-"
-extension = ".pkl"
+extension = ".joblib"
 
 [fig_parameters]
 dir = "figures/methods_paper/"
