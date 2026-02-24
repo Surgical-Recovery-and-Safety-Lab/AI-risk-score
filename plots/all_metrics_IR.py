@@ -4,17 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
-from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import (
+from medpipe import (
     compute_all_CI,
     compute_pred_metrics,
     compute_score_metrics,
+    extract_labels,
+    get_full_proba,
+    load_data_from_csv,
+    load_pipeline,
+    print_message,
+    read_toml_configuration,
 )
-from pyrisk.models.core import get_full_proba, load_pipeline
-from pyrisk.pipeline.Pipeline import Pipeline
-from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
-from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
-from pyrisk.utils.logger import print_message
+from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 
 
 def plot_metrics_CI(
@@ -125,6 +126,7 @@ def plot_metrics_CI(
         loc="center right",
         bbox_to_anchor=(0.9, 0.15),
         title="Methods",
+        frameon=False,
     )
 
     # Set ax_kwargs to override if needed
@@ -196,7 +198,6 @@ if __name__ == "__main__":
                 general_config["data_parameters"],
                 data_version,
             )
-            pipeline = Pipeline(general_config, logger)
             print_message("Getting data", logger, script_name)
             data = load_data_from_csv(
                 get_file_path(
@@ -215,7 +216,7 @@ if __name__ == "__main__":
             tmp_metric_dict = {}
             tmp_metric_dict_pred = {}
 
-            for key in pipeline.calibrator_probabilities[i]:
+            for key in pipeline.calibrator_probabilities[outcomes[i]].keys():
                 y_test = y_train[X_train["OP_YEAR"] == key]
                 tmp_metric_dict[key] = compute_score_metrics(
                     ["auroc", "ap", "log_loss"],

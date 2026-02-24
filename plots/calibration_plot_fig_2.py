@@ -5,12 +5,15 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
-from pyrisk.data.preprocessing import extract_labels
-from pyrisk.models.core import get_positive_proba, load_pipeline
-from pyrisk.pipeline.Pipeline import Pipeline
-from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
-from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
-from pyrisk.utils.logger import print_message
+from medpipe import (
+    extract_labels,
+    get_positive_proba,
+    load_data_from_csv,
+    load_pipeline,
+    print_message,
+    read_toml_configuration,
+)
+from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from sklearn.calibration import calibration_curve
 
 
@@ -20,11 +23,11 @@ def plot_reliability_diagrams(
     label_list=[],
     save_path="",
     extension=".png",
-    display_kwargs={},
+    calibration_kwargs={},
     **kwargs,
 ):
     """
-    Plots the reliability diagrams using CalibrationDisplay from
+    Plots the reliability diagrams using the calibration curve function from
     sklearn.calibration.
 
     Parameters
@@ -40,8 +43,8 @@ def plot_reliability_diagrams(
         Extension to save figure in.
     show_fig : bool, default: True
         Flag to show the figure.
-    display_kwargs : dict[str, value], default: {}
-        Extra arguments for the CalibrationDisplay.
+    calibration_kwargs : dict[str, value], default: {}
+        Extra arguments for the calibration curve function.
     **kwargs
         Extra arguments for the figure or axes objects.
 
@@ -72,8 +75,22 @@ def plot_reliability_diagrams(
         prob_true, prob_pred = calibration_curve(
             y_test,
             y_pred_proba[i],
-            **display_kwargs,
+            **calibration_kwargs,
         )
+
+        boots = []
+        for _ in range(500):
+            idx = np.random.choice(len(y_test), len(y_test), replace=True)
+            prob_true_boot, _ = calibration_curve(
+                y_test[idx],
+                y_pred_proba[i][idx],
+                **calibration_kwargs,
+            )
+            boots.append(prob_true_boot)
+
+        lower = np.percentile(boots, 2.5, axis=0)
+        upper = np.percentile(boots, 97.5, axis=0)
+
         ax.plot(
             prob_pred,
             prob_true,
@@ -81,6 +98,8 @@ def plot_reliability_diagrams(
             color=colours[i],
             label=label_list[i],
         )
+        ax.fill_between(prob_pred, lower, upper, color=colours[i], alpha=0.5)
+
     ax.set_xlabel("Predicted probabilities", fontweight="bold")
     ax.set_ylabel("Observed proportion", fontweight="bold")
 
@@ -91,7 +110,9 @@ def plot_reliability_diagrams(
     plt.gca().spines["top"].set_visible(False)
     plt.gca().spines["right"].set_visible(False)
 
-    ax.legend(loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Methods")
+    ax.legend(
+        loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Methods", frameon=False
+    )
     plt.tight_layout()
     fig.subplots_adjust(right=0.66, bottom=0.14)
 
@@ -121,7 +142,7 @@ if __name__ == "__main__":
     metric_dict = {}
 
     extension = general_config["fig_parameters"]["extension"]
-    ext = ["_MORTALITY_90D", "_ANY_COMP"]
+    outcomes = ["MORTALITY_90D", "ANY_COMP"]
     versions = [
         "v0.1.1.1-a.1.2.2",
         "v0.1.1.1-a.2.2.2",
@@ -129,7 +150,7 @@ if __name__ == "__main__":
         "v0.1.1.1-a.6.2.2",
         "v0.1.1.1-a.14.2.2",
     ]
-    label_list = ["Original", "CSL", "SMOTE", "ROS", "RUS"]
+    label_list = ["Natural", "CSL", "SMOTE", "ROS", "RUS"]
     save_file = get_file_path(
         general_config,
         v_number="",
@@ -152,7 +173,6 @@ if __name__ == "__main__":
                 general_config["data_parameters"],
                 data_version,
             )
-            pipeline = Pipeline(general_config, logger)
             print_message("Getting data", logger, script_name)
             data = load_data_from_csv(
                 get_file_path(
@@ -172,16 +192,18 @@ if __name__ == "__main__":
             X_test = pd.concat((X_test_24, X_test_23))
             X_test, y_test = extract_labels(X_test, pipeline.label_list)
             y_pred_proba.append(
-                get_positive_proba(pipeline.predict_proba(X_test, i, "predictor"))
+                get_positive_proba(
+                    pipeline.predict_proba(X_test, outcomes[i], "predictor")
+                )
             )
 
         plot_reliability_diagrams(
             y_test[:, i],
             y_pred_proba,
             label_list=label_list,
-            save_path=save_file + "_reliability_diagram" + ext[i],
+            save_path=save_file + f"_reliability_diagram_{outcomes[i]}",
             extension=extension,
-            display_kwargs={"n_bins": 10, "strategy": "quantile"},
+            calibration_kwargs={"n_bins": 10, "strategy": "quantile"},
             dpi=300,
             figsize=(5, 5),
         )

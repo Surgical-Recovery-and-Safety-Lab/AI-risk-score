@@ -3,12 +3,15 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pyrisk.data.preprocessing import extract_labels
-from pyrisk.models.core import get_positive_proba, load_pipeline
-from pyrisk.pipeline.Pipeline import Pipeline
-from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
-from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
-from pyrisk.utils.logger import print_message
+from medpipe import (
+    extract_labels,
+    get_positive_proba,
+    load_data_from_csv,
+    load_pipeline,
+    print_message,
+    read_toml_configuration,
+)
+from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from sklearn.metrics import confusion_matrix
 
 
@@ -49,7 +52,7 @@ if __name__ == "__main__":
     )
     extension = general_config["fig_parameters"]["extension"]
     outcomes = ["MORTALITY_90D", "ANY_COMP"]
-    methods = ["Original", "CSL", "SMOTE", "ROS", "RUS"]
+    methods = ["Natural", "CSL", "SMOTE", "ROS", "RUS"]
     colours = ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F", "#1D6968"]
     ylims = [(-0.0345, 0.0345), (-0.165, 0.165)]
 
@@ -79,7 +82,6 @@ if __name__ == "__main__":
                 general_config["data_parameters"],
                 data_version,
             )
-            pipeline = Pipeline(general_config, logger)
             print_message("Getting data", logger, script_name)
             data = load_data_from_csv(
                 get_file_path(
@@ -141,4 +143,5 @@ if __name__ == "__main__":
         plt.tight_layout()
 
         save_path = save_file + f"_decision_curve_{outcomes[i]}" + extension
+        plt.legend(frameon=False)
         plt.savefig(save_path)

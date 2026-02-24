@@ -4,17 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
-from pyrisk.data.preprocessing import extract_labels
-from pyrisk.metrics.core import (
+from medpipe import (
     compute_all_CI,
     compute_pred_metrics,
     compute_score_metrics,
+    extract_labels,
+    get_full_proba,
+    load_data_from_csv,
+    load_pipeline,
+    print_message,
+    read_toml_configuration,
 )
-from pyrisk.models.core import get_full_proba, load_pipeline
-from pyrisk.pipeline.Pipeline import Pipeline
-from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
-from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
-from pyrisk.utils.logger import print_message
+from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 
 
 def plot_metrics_CI(
@@ -123,6 +124,7 @@ def plot_metrics_CI(
         bbox_to_anchor=(0.9, 0.15),
         title="Methods",
         ncols=2,
+        frameon=False,
     )
 
     # Set ax_kwargs to override if needed
@@ -185,7 +187,6 @@ if __name__ == "__main__":
                 general_config["data_parameters"],
                 data_version,
             )
-            pipeline = Pipeline(general_config, logger)
             print_message("Getting data", logger, script_name)
             data = load_data_from_csv(
                 get_file_path(
@@ -231,7 +232,7 @@ if __name__ == "__main__":
         ci_dict = compute_all_CI(metric_dict)
         plot_metrics_CI(
             ci_dict,
-            ["Original", "CSL", "SMOTE", "ROS", "RUS"],
+            ["Natural", "CSL", "SMOTE", "ROS", "RUS"],
             dpi=300,
             figsize=(6, 6),
             save_path=save_file + f"_{outcomes[i]}_metrics_OG",

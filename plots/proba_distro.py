@@ -4,12 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
-from pyrisk.data.preprocessing import extract_labels
-from pyrisk.models.core import get_positive_proba, load_pipeline
-from pyrisk.pipeline.Pipeline import Pipeline
-from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
-from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
-from pyrisk.utils.logger import print_message
+from medpipe import (
+    extract_labels,
+    get_positive_proba,
+    load_data_from_csv,
+    load_pipeline,
+    print_message,
+    read_toml_configuration,
+)
+from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 
 
 def plot_prediction_distribution(
@@ -76,7 +79,9 @@ def plot_prediction_distribution(
     )
     plt.gca().spines["top"].set_visible(False)
     plt.gca().spines["right"].set_visible(False)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.45, 0.9), title=title[1])
+    ax.legend(
+        loc="upper right", bbox_to_anchor=(1.45, 0.9), title=title[1], frameon=False
+    )
     ax.set_ylim([1, 1e6])
     ax.set_xlim([-0.05, 1.05])
     ax.set_title(title[0], fontweight="bold")
@@ -154,12 +159,12 @@ if __name__ == "__main__":
     label_list = {
         "CSL": (
             [
-                "Baseline",
+                "Natural",
                 "CSL",
                 "Models",
             ],
             [
-                "Baseline",
+                "Natural",
                 "CSL",
                 "Models",
             ],
@@ -236,7 +241,6 @@ if __name__ == "__main__":
                     general_config["data_parameters"],
                     data_version,
                 )
-                pipeline = Pipeline(general_config, logger)
                 print_message("Getting data", logger, script_name)
                 data = load_data_from_csv(
                     get_file_path(

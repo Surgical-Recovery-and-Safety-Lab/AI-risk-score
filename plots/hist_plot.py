@@ -2,10 +2,8 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pyrisk.pipeline.Pipeline import Pipeline
-from pyrisk.utils.config import get_configuration, get_file_path, split_version_number
-from pyrisk.utils.io import load_data_from_csv, read_toml_configuration
-from pyrisk.utils.logger import print_message
+from medpipe import load_data_from_csv, print_message, read_toml_configuration
+from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 
 
 def plt_hist(operation_years):
@@ -19,7 +17,7 @@ def plt_hist(operation_years):
     plt.hist(
         operation_years,
         bins=bins,
-        color="#99C7E0",
+        color="#2D90D8",
         edgecolor="black",
         linewidth=1.2,
         label="Patient count",
@@ -80,7 +78,6 @@ if __name__ == "__main__":
         general_config["data_parameters"],
         data_version,
     )
-    pipeline = Pipeline(general_config, logger)
     print_message("Getting data", logger, script_name)
     data = load_data_from_csv(
         get_file_path(
