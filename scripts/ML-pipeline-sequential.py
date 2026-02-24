@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ML-models-parallel.py
+ML-pipeline-sequential.py
 
-Parallel call to ML-models.py
+Sequential call to ML-pipeline.py
 """
 
 import argparse
-import multiprocessing
 import subprocess
 
 
-def run_parallel(model_config_file, version_number):
+def run_sequential(version_number):
     """
-    Runs the ML-models.py script for parallel call.
+    Runs the ML-pipeline.py script for sequential call.
 
     Parameters
     ----------
-    model_config_file : str
-        Path to the model configuration file.
     version_number : str
         Version number to use.
 
@@ -31,30 +28,23 @@ def run_parallel(model_config_file, version_number):
     subprocess.run(
         [
             "python3",
-            "ML-models.py",
-            model_config_file,
+            "ML-pipeline.py",
+            args.model_config_file,
             "--version",
             version_number,
             "--no-plots",
-            "-q",
         ]
     )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a machine learning model"
+        description="Create and train machine learning pipelines sequentially"
     )
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
         help="Path to the model configuration file",
-    )
-    parser.add_argument(
-        "n_processes",
-        metavar="n-processes",
-        type=int,
-        help="Number of processes to use",
     )
     parser.add_argument(
         "version_numbers",
@@ -65,7 +55,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     version_numbers = args.version_numbers
-    input_args = [(args.model_config_file, version) for version in version_numbers]
 
-    with multiprocessing.Pool(processes=args.n_processes) as pool:
-        pool.starmap(run_parallel, input_args)
+    for version in version_numbers:
+        run_sequential(version)

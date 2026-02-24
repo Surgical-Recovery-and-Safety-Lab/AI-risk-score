@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ML-models.py
+ML-pipeline.py
 
-Machine learning model creation and training script.
+Machine learning pipeline creation and training script.
 """
 
 import argparse
@@ -89,7 +89,6 @@ if __name__ == "__main__":
             general_config["data_parameters"],
             data_version,
         )
-        pipeline = Pipeline(general_config, logger)
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -104,6 +103,7 @@ if __name__ == "__main__":
         )
 
         if not args.load:
+            pipeline = Pipeline(general_config, logger)
             X_train, _ = pipeline.get_test_data(data)
             pipeline.run(X_train)
 
@@ -217,7 +217,7 @@ if __name__ == "__main__":
                 save_path=save_file + f"_{label}_reliability_diagram",
                 extension=extension,
                 show_fig=args.no_plots,
-                display_kwargs={"n_bins": 15, "strategy": "quantile"},
+                calibration_kwargs={"n_bins": 10, "strategy": "quantile"},
                 dpi=300,
                 figsize=(5, 5),
             )
