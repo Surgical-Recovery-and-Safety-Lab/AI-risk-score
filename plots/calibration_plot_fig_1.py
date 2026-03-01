@@ -98,7 +98,14 @@ def plot_reliability_diagrams(
             color=colours[i],
             label=label_list[i],
         )
-        ax.fill_between(prob_pred, lower, upper, color=colours[i], alpha=0.5)
+        ax.fill_between(
+            prob_pred,
+            lower,
+            upper,
+            color=colours[i],
+            alpha=0.5,
+            label=f"{label_list[i]} 95% CI",
+        )
 
     ax.set_xlabel("Predicted probabilities", fontweight="bold")
     ax.set_ylabel("Observed proportion", fontweight="bold")
