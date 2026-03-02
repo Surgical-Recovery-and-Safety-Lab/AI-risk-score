@@ -80,7 +80,7 @@ def plot_reliability_diagrams(
         )
 
         boots = []
-        for _ in range(500):
+        for _ in range(1000):
             idx = np.random.choice(len(y_test), len(y_test), replace=True)
             prob_true_boot, _ = calibration_curve(
                 y_test[idx],

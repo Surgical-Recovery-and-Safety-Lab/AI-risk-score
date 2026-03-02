@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.text import Text
 from medpipe import (
     extract_labels,
     get_positive_proba,
@@ -21,8 +22,9 @@ def plot_reliability_diagrams(
     y_test,
     proba_list,
     label_list=[],
+    title="",
     colour="#2D90D8",
-    n_bootstraps=200,
+    n_bootstraps=1000,
     save_path="",
     extension=".png",
     calibration_kwargs={},
@@ -125,12 +127,18 @@ def plot_reliability_diagrams(
     )
     ax_dist.set_yscale("log")
     ax_dist.set_xlabel("Predicted probabilities", fontweight="bold")
+    ax_dist.set_yticks([1.0e02, 1.0e04, 1.0e06])
+    ax_dist.set_yticklabels(
+        [
+            Text(0, 100.0, "$\\mathdefault{10^{2}}$"),
+            Text(0, 10000.0, "$\\mathdefault{10^{4}}$"),
+            Text(0, 1000000.0, "$\\mathdefault{10^{6}}$"),
+        ]
+    )
+    ax_dist.set_ylim(top=3e5)
 
     # Set title and labels
-    title = kwargs["set_title"] if "set_title" in kwargs.keys() else ""
     ax.set_title(title, fontweight="bold")
-    if "set_title" in kwargs.keys():
-        ax_kwargs.pop("set_title")
     ax.set_xlabel("Predicted probabilities", fontweight="bold")
     ax.set_ylabel("Observed proportion", fontweight="bold")
 
@@ -141,15 +149,14 @@ def plot_reliability_diagrams(
     ax.legend(
         loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Methods", frameon=False
     )
-    plt.tight_layout()
 
     # Remove spines for aesthetics for distribution
     plt.gca().spines["top"].set_visible(False)
     plt.gca().spines["right"].set_visible(False)
 
-    fig.subplots_adjust(right=0.66, bottom=0.14)
-
     save_file = save_path + extension
+    plt.tight_layout()
+    fig.subplots_adjust(right=0.65, bottom=0.14)
     plt.savefig(save_file)
 
     plt.close()
@@ -302,6 +309,7 @@ if __name__ == "__main__":
                 y_pred_proba,
                 label_list=label_list[j * 2 : j * 2 + 2],
                 colour=colours[j * 2 : j * 2 + 2],
+                title=label_list[j * 2],
                 save_path=save_file
                 + f"_recalibrated_{label_list[j*2]}_reliability_diagram_{outcomes[i]}",
                 extension=extension,
