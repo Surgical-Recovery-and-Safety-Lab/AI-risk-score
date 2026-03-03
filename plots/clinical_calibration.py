@@ -14,9 +14,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from sklearn.calibration import calibration_curve
-
 from medpipe import (
     exception_handler,
     extract_labels,
@@ -29,9 +26,34 @@ from medpipe import (
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from medpipe.utils.exceptions import file_checks
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from sklearn.calibration import calibration_curve
 
+COLOUR_MAP = {
+    "MORTALITY_30D": "#33367A",
+    "MORTALITY_90D": "#33367A",
+    "MORTALITY_1Y": "#33367A",
+    "READMIT_ACUTE_30D": "#96690E",
+    "READMIT_ACUTE_90D": "#96690E",
+    "ANY_COMP": "#96690E",
+    "SSI": "#2D90D8",
+    "VTE": "#2D90D8",
+    "CARDIAC_ARREST": "#2D90D8",
+    "SEPSIS": "#2D90D8",
+    "RESPIRATORY_FAILURE": "#2D90D8",
+    "SHOCK": "#2D90D8",
+    "STROKE": "#2D90D8",
+    "AKI": "#2D90D8",
+    "CARDIAC_ARRHYTHMIA": "#2D90D8",
+    "DELIRIUM": "#2D90D8",
+    "GI_BLEEDING": "#2D90D8",
+    "HAEMORRHAGE": "#2D90D8",
+    "IMPLANT_GRAFT": "#2D90D8",
+    "MYOCARDIAL_INFARCTION": "#2D90D8",
+    "PNEUMONIA": "#2D90D8",
+    "UTI": "#2D90D8",
+}
 LABEL_MAP = {
-    "ALL": "All",
     "MORTALITY_30D": "30-day mortality",
     "MORTALITY_90D": "90-day mortality",
     "MORTALITY_1Y": "1-year mortality",
@@ -60,9 +82,10 @@ LABEL_MAP = {
 def plot_clinical_calibration(
     y_test,
     proba_list,
-    label_list=[],
+    outcome,
+    label,
     distribution=False,
-    n_bootstraps=200,
+    n_bootstraps=1000,
     save_path="",
     extension=".png",
     show_fig=True,
@@ -83,8 +106,10 @@ def plot_clinical_calibration(
         Ground truth labels.
     proba_list : list[array]
         List of predicted probabilities.
-    label_list : list[str], default: []
-        List of labels for the legend.
+    outcome : str
+        Predicted outcome.
+    label : str
+        Labels for the legend.
     distribution : bool, default: False
         Flag to plot the probability distribution as well.
     n_bootstraps : int, default: 200
@@ -106,8 +131,6 @@ def plot_clinical_calibration(
         Nothing is returned.
 
     """
-    colours = ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F"]
-
     # Split arguments based on where they should be sent
     ax_kwargs = {key: value for key, value in kwargs.items() if key in dir(Axes)}
     fig_kwargs = {key: value for key, value in kwargs.items() if key in dir(Figure)}
@@ -132,101 +155,96 @@ def plot_clinical_calibration(
         label="Perfectly calibrated",
     )
 
-    for i in range(len(proba_list)):
-        prob_true, prob_pred = calibration_curve(
-            y_test,
-            proba_list[i],
+    prob_true, prob_pred = calibration_curve(
+        y_test,
+        proba_list,
+        **calibration_kwargs,
+    )
+
+    boots = []
+    for _ in range(n_bootstraps):
+        idx = np.random.choice(len(y_test), len(y_test), replace=True)
+        prob_true_boot, _ = calibration_curve(
+            y_test[idx],
+            proba_list[idx],
             **calibration_kwargs,
         )
+        if len(prob_true_boot) == len(prob_true):
+            boots.append(prob_true_boot)
 
-        boots = []
-        for _ in range(n_bootstraps):
-            idx = np.random.choice(len(y_test), len(y_test), replace=True)
-            prob_true_boot, _ = calibration_curve(
-                y_test[idx],
-                proba_list[i][idx],
-                **calibration_kwargs,
-            )
-            if len(prob_true_boot) == len(prob_true):
-                boots.append(prob_true_boot)
+        lower = np.percentile(boots, 2.5, axis=0)
+        upper = np.percentile(boots, 97.5, axis=0)
 
-            lower = np.percentile(boots, 2.5, axis=0)
-            upper = np.percentile(boots, 97.5, axis=0)
+    ax.plot(
+        prob_pred,
+        prob_true,
+        marker=".",
+        color=COLOUR_MAP[outcome],
+        label=label,
+    )
+    ax.fill_between(
+        prob_pred,
+        lower,
+        upper,
+        color=COLOUR_MAP[outcome],
+        alpha=0.5,
+        label=f"{label} 95% CI",
+    )
 
-        ax.plot(
+    if max(prob_pred) < 0.4:
+        # Remove spines for aesthetics
+        plt.gca().spines["top"].set_visible(False)
+        plt.gca().spines["right"].set_visible(False)
+
+        ax_ins = ax.inset_axes(
+            [0.5, 0.1, 0.5, 0.5],
+            yticklabels=[],
+        )
+        ax_ins.plot(
             prob_pred,
             prob_true,
             marker=".",
-            color=colours[i],
-            label=label_list[i],
+            color=COLOUR_MAP[outcome],
         )
-        ax.fill_between(
+        ax_ins.fill_between(
             prob_pred,
             lower,
             upper,
-            color=colours[i],
+            color=COLOUR_MAP[outcome],
             alpha=0.5,
-            label=f"{label_list[i]} 95% CI",
+        )
+        ax_ins.plot(
+            np.linspace(0, max(prob_pred), 100),
+            np.linspace(0, max(prob_pred), 100),
+            "k--",
         )
 
-        if max(prob_pred) < 0.4:
-            # Remove spines for aesthetics
-            plt.gca().spines["top"].set_visible(False)
-            plt.gca().spines["right"].set_visible(False)
+        # Connect the inset to the zoomed area in the main plot
+        ax.indicate_inset_zoom(ax_ins, edgecolor="black")
 
-            ax_ins = ax.inset_axes(
-                [0.5, 0.1, 0.5, 0.5],
-                yticklabels=[],
-            )
-            ax_ins.plot(
-                prob_pred,
-                prob_true,
-                marker=".",
-                color=colours[i],
-            )
-            ax_ins.fill_between(
-                prob_pred,
-                lower,
-                upper,
-                color=colours[i],
-                alpha=0.5,
-            )
-            ax_ins.plot(
-                np.linspace(0, max(prob_pred), 100),
-                np.linspace(0, max(prob_pred), 100),
-                "k--",
-            )
+    # Create new plot for distribution
+    divider = make_axes_locatable(ax)
+    ax_dist = divider.append_axes("bottom", 0.5, pad=0.1)
 
-            # Connect the inset to the zoomed area in the main plot
-            ax.indicate_inset_zoom(ax_ins, edgecolor="black")
+    if "n_bins" in calibration_kwargs.keys():
+        bins = np.linspace(0, 1, calibration_kwargs["n_bins"] + 1)
+    else:
+        bins = np.linspace(0, 1, 21)
 
-    if distribution:
-        # Create new plot for distribution
-        divider = make_axes_locatable(ax)
-        ax_dist = divider.append_axes("bottom", 0.5, pad=0.1)
+    ax_dist.hist(
+        proba_list,
+        stacked=True,
+        color=COLOUR_MAP[outcome],
+        edgecolor="black",
+        bins=bins,
+    )
+    ax_dist.set_yscale("log")
+    ax_dist.set_ylim(bottom=1, top=10e6)
+    ax_dist.set_xlabel("Predicted probabilities", fontweight="bold")
 
-        if "n_bins" in calibration_kwargs.keys():
-            bins = np.linspace(0, 1, calibration_kwargs["n_bins"] + 1)
-        else:
-            bins = np.linspace(0, 1, 21)
-
-        ax_dist.hist(
-            proba_list,
-            stacked=True,
-            color=colours[: len(proba_list)],
-            edgecolor="black",
-            bins=bins,
-            label=label_list,
-        )
-        ax_dist.set_yscale("log")
-        ax_dist.set_ylim(top=10e6)
-        ax_dist.set_yticks([10e3, 10e7])
-        ax_dist.set_yticklabels([r"$10^3$", r"$10^7$"])
-        ax_dist.set_xlabel("Predicted probabilities", fontweight="bold")
-
-        # Remove spines for aesthetics for distribution
-        plt.gca().spines["top"].set_visible(False)
-        plt.gca().spines["right"].set_visible(False)
+    # Remove spines for aesthetics for distribution
+    plt.gca().spines["top"].set_visible(False)
+    plt.gca().spines["right"].set_visible(False)
 
     ax.set_xlabel("Predicted probabilities", fontweight="bold")
     ax.set_ylabel("Observed proportion", fontweight="bold")
@@ -235,7 +253,9 @@ def plot_clinical_calibration(
     for key, val in ax_kwargs.items():
         getattr(ax, key)(val)
 
-    ax.legend(loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Models")
+    ax.legend(
+        loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Models", frameon=False
+    )
 
     fig.subplots_adjust(right=0.66, bottom=0.14)
 
@@ -347,25 +367,25 @@ if __name__ == "__main__":
             exists=False,
         )
         extension = general_config["fig_parameters"]["extension"]
-        label_list = ["Recalibrated"]
 
-        for i, label in enumerate(pipeline.label_list):
-            print_message(label, logger, script_name)
+        for i, outcome in enumerate(pipeline.label_list):
+            print_message(outcome, logger, script_name)
             y_pred_proba = pipeline.predict_proba(
-                X_test, label_list=label, model_type="calibrator"
+                X_test, label_list=outcome, model_type="calibrator"
             )
             plot_clinical_calibration(
                 y_test[:, i],
-                [get_positive_proba(y_pred_proba).squeeze()],
-                label_list=label_list,
+                get_positive_proba(y_pred_proba).squeeze(),
+                outcome=outcome,
+                label="Recalibrated",
                 distribution=True,
-                save_path=save_file + f"_{label}_recalib_reliability_diagram",
+                save_path=save_file + f"_{outcome}_recalib_reliability_diagram",
                 extension=extension,
                 show_fig=args.no_plots,
                 calibration_kwargs={"n_bins": 10, "strategy": "quantile"},
                 dpi=300,
                 figsize=(5, 5),
-                set_title=f"{LABEL_MAP[label]}",
+                set_title=f"{LABEL_MAP[outcome]}",
             )
 
     except Exception:
