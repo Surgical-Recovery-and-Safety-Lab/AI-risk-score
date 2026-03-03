@@ -48,7 +48,14 @@ def data_stats(dataset, label_list):
             print_message(f"{input}")
             for val in vals:
                 sum_val = np.sum(data == val)
-                print_message(f"  {val}: {sum_val} ({100*(sum_val / total):.4f})")
+                print_message(f"  {val}: {sum_val:,} ({100*(sum_val / total):.2f})")
+
+    for label in labels:
+        yes_sum = np.sum(dataset[label])
+        no_sum = np.sum(not dataset[label])
+        print_message(f"{label}")
+        print_message(f" Yes: {yes_sum:,} ({100*(yes_sum / total):.2f})")
+        print_message(f" No: {no_sum:,} ({100*(no_sum / total):.2f})")
 
 
 if __name__ == "__main__":
