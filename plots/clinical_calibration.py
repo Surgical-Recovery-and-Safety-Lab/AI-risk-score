@@ -29,6 +29,30 @@ from medpipe.utils.exceptions import file_checks
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.calibration import calibration_curve
 
+MODEL_MAP = {
+    "MORTALITY_30D": "calibrator",
+    "MORTALITY_90D": "calibrator",
+    "MORTALITY_1Y": "calibrator",
+    "READMIT_ACUTE_30D": "calibrator",
+    "READMIT_ACUTE_90D": "predictor",
+    "ANY_COMP": "calibrator",
+    "SSI": "calibrator",
+    "VTE": "predictor",
+    "CARDIAC_ARREST": "predictor",
+    "SEPSIS": "predictor",
+    "RESPIRATORY_FAILURE": "calibrator",
+    "SHOCK": "predictor",
+    "STROKE": "calibrator",
+    "AKI": "calibrator",
+    "CARDIAC_ARRHYTHMIA": "predictor",
+    "DELIRIUM": "predictor",
+    "GI_BLEEDING": "calibrator",
+    "HAEMORRHAGE": "predictor",
+    "IMPLANT_GRAFT": "calibrator",
+    "MYOCARDIAL_INFARCTION": "calibrator",
+    "PNEUMONIA": "predictor",
+    "UTI": "calibrator",
+}
 COLOUR_MAP = {
     "MORTALITY_30D": "#33367A",
     "MORTALITY_90D": "#33367A",
@@ -172,8 +196,11 @@ def plot_clinical_calibration(
         if len(prob_true_boot) == len(prob_true):
             boots.append(prob_true_boot)
 
-        lower = np.percentile(boots, 2.5, axis=0)
-        upper = np.percentile(boots, 97.5, axis=0)
+        try:
+            lower = np.percentile(boots, 2.5, axis=0)
+            upper = np.percentile(boots, 97.5, axis=0)
+        except IndexError:
+            breakpoint()
 
     ax.plot(
         prob_pred,
@@ -219,6 +246,14 @@ def plot_clinical_calibration(
             "k--",
         )
 
+        # Set limits to be square based on highest value
+        _, x_top = ax_ins.get_xlim()
+        _, y_top = ax_ins.get_ylim()
+        if x_top > y_top:
+            ax_ins.set_ylim(ax_ins.get_xlim())
+        else:
+            ax_ins.set_xlim(ax_ins.get_ylim())
+
         # Connect the inset to the zoomed area in the main plot
         ax.indicate_inset_zoom(ax_ins, edgecolor="black")
 
@@ -253,9 +288,7 @@ def plot_clinical_calibration(
     for key, val in ax_kwargs.items():
         getattr(ax, key)(val)
 
-    ax.legend(
-        loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Models", frameon=False
-    )
+    ax.legend(loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Key", frameon=False)
 
     fig.subplots_adjust(right=0.66, bottom=0.14)
 
@@ -371,15 +404,15 @@ if __name__ == "__main__":
         for i, outcome in enumerate(pipeline.label_list):
             print_message(outcome, logger, script_name)
             y_pred_proba = pipeline.predict_proba(
-                X_test, label_list=outcome, model_type="calibrator"
+                X_test, label_list=outcome, model_type=MODEL_MAP[outcome]
             )
             plot_clinical_calibration(
                 y_test[:, i],
                 get_positive_proba(y_pred_proba).squeeze(),
                 outcome=outcome,
-                label="Recalibrated",
+                label="Calibration",
                 distribution=True,
-                save_path=save_file + f"_{outcome}_recalib_reliability_diagram",
+                save_path=save_file + f"_{outcome}_best_reliability_diagram",
                 extension=extension,
                 show_fig=args.no_plots,
                 calibration_kwargs={"n_bins": 10, "strategy": "quantile"},
