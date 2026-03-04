@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     print_message("Loading parameters from configuration file")
     # Read log and general configuration file
-    log_config = read_toml_configuration("../config/log.toml")
+    log_config = read_toml_configuration("../../config/log.toml")
     general_config = read_toml_configuration(args.model_config_file)
     logger = None
     script_name = ""

@@ -21,7 +21,6 @@ def plot_reliability_diagrams(
     y_test,
     y_pred_proba=[],
     label_list=[],
-    title=[],
     save_path="",
     extension=".png",
     calibration_kwargs={},
@@ -103,7 +102,6 @@ def plot_reliability_diagrams(
 
     ax.set_xlabel("Predicted probabilities", fontweight="bold")
     ax.set_ylabel("Observed proportion", fontweight="bold")
-    ax.set_title(title[0], fontweight="bold")
 
     # Set ax_kwargs to override if needed
     for key, val in ax_kwargs.items():
@@ -113,32 +111,31 @@ def plot_reliability_diagrams(
     plt.gca().spines["right"].set_visible(False)
 
     ax.legend(
-        loc="upper right", bbox_to_anchor=(1.6, 0.9), title=title[1], frameon=False
+        loc="upper right", bbox_to_anchor=(1.6, 0.9), title="Methods", frameon=False
     )
     plt.tight_layout()
     fig.subplots_adjust(right=0.66, bottom=0.14)
 
     if save_path:
-        save_file = save_path + f"_{label_list[-1]}" + extension
+        save_file = save_path + extension
         plt.savefig(save_file)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Plots the calibration curves for Figure 4."
+        description="Plots the calibration curves for Figure 2."
     )
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
         help="Path to the general configuration file",
     )
-    parser.add_argument("method", help="Method used")
 
     args = parser.parse_args()
 
     print_message("Loading parameters from configuration file")
     # Read log and general configuration file
-    log_config = read_toml_configuration("../config/log.toml")
+    log_config = read_toml_configuration("../../config/log.toml")
     general_config = read_toml_configuration(args.model_config_file)
     logger = None
     script_name = ""
@@ -146,59 +143,14 @@ if __name__ == "__main__":
 
     extension = general_config["fig_parameters"]["extension"]
     outcomes = ["MORTALITY_90D", "ANY_COMP"]
-    versions = {
-        "CSL": [
-            "v0.1.1.1-a.1.2.2",
-            "v0.1.1.1-a.2.2.2",
-        ],
-        "SMOTE": [
-            "v0.1.1.1-a.1.2.2",
-            "v0.1.1.1-a.9.2.2",
-            "v0.1.1.1-a.8.2.2",
-            "v0.1.1.1-a.7.2.2",
-            "v0.1.1.1-a.10.2.2",
-        ],
-        "ROS": [
-            "v0.1.1.1-a.1.2.2",
-            "v0.1.1.1-a.5.2.2",
-            "v0.1.1.1-a.4.2.2",
-            "v0.1.1.1-a.3.2.2",
-            "v0.1.1.1-a.6.2.2",
-        ],
-        "RUS": [
-            "v0.1.1.1-a.1.2.2",
-            "v0.1.1.1-a.13.2.2",
-            "v0.1.1.1-a.12.2.2",
-            "v0.1.1.1-a.11.2.2",
-            "v0.1.1.1-a.14.2.2",
-        ],
-    }
-    if args.method == "CSL":
-        label_list = (
-            ["Baseline", "CSL"],
-            ["Baseline", "CSL"],
-        )
-        title = ["CSL", "Models"]
-    else:
-        label_list = (
-            [
-                "IR = 73.2",
-                "IR = 54.9",
-                "IR = 36.6",
-                "IR = 18.3",
-                "IR = 1.0",
-                outcomes[0],
-            ],
-            [
-                "IR = 9.6",
-                "IR = 7.2",
-                "IR = 4.8",
-                "IR = 2.4",
-                "IR = 1.0",
-                outcomes[1],
-            ],
-        )
-        title = [args.method, "Imbalance ratio"]
+    versions = [
+        "v0.1.1.1-a.1.2.2",
+        "v0.1.1.1-a.2.2.2",
+        "v0.1.1.1-a.10.2.2",
+        "v0.1.1.1-a.6.2.2",
+        "v0.1.1.1-a.14.2.2",
+    ]
+    label_list = ["Natural", "CSL", "SMOTE", "ROS", "RUS"]
     save_file = get_file_path(
         general_config,
         v_number="",
@@ -208,7 +160,7 @@ if __name__ == "__main__":
 
     for i in range(2):
         y_pred_proba = []
-        for version in versions[args.method]:
+        for version in versions:
             # Swap version numbers if overloading
             general_config["version"] = version
             print_message(
@@ -248,9 +200,8 @@ if __name__ == "__main__":
         plot_reliability_diagrams(
             y_test[:, i],
             y_pred_proba,
-            label_list=label_list[i],
-            title=title,
-            save_path=save_file + f"{args.method}_reliability_diagram_" + outcomes[i],
+            label_list=label_list,
+            save_path=save_file + f"_reliability_diagram_{outcomes[i]}",
             extension=extension,
             calibration_kwargs={"n_bins": 10, "strategy": "quantile"},
             dpi=300,

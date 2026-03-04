@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     try:
         # Read log configuration file
-        log_config = read_toml_configuration("../config/log.toml")
+        log_config = read_toml_configuration("../../config/log.toml")
 
         # Create logger
         script_name = str(pathlib.Path(__file__).stem)
