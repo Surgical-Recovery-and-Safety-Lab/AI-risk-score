@@ -9,3 +9,5 @@ logs/
 
 # Ignore models
 models/
+
+src/clinical-paper/__pycache__
