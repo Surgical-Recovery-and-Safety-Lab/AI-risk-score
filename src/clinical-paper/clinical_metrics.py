@@ -13,7 +13,6 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from constants import LABEL_MAP
-from matplotlib import gridspec
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from medpipe import (
