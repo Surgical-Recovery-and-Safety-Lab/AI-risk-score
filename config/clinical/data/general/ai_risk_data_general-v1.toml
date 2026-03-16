@@ -1,0 +1,12 @@
+base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
+
+[io_parameters]
+dir = "data/clinical/processed/"
+name = "ai_risk_data_test-"
+extension = ".csv"
+
+[db_parameters]
+dir = "data/clinical/raw/"
+name = "nz_hospital"
+table_name = "main"
+extension = ".db"
