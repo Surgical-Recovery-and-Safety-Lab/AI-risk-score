@@ -13,6 +13,7 @@ feature_list = [
   "CATEGORY_LEVEL_2",
   "OP_SEVERITY",
   "TRAUMA",
+  "FACILITY",
   "OP_YEAR",
   "MORTALITY_30D",
   "READMIT_ACUTE_30D",

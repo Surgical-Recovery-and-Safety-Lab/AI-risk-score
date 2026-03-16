@@ -1,0 +1,10 @@
+[labels]
+label_list = [
+  "MORTALITY_30D",
+  "READMIT_ACUTE_30D",
+  "ANY_COMP",
+  "RESPIRATORY_FAILURE",
+  "SEPSIS",
+  "STROKE",
+  "CARDIAC_ARREST",
+]

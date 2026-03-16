@@ -1,0 +1,6 @@
+[split_variables]
+temporal_k_fold = false
+n_splits = 2
+shuffle = true
+random_state = 42
+group_name = ""
