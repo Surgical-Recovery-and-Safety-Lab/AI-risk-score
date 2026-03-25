@@ -235,6 +235,7 @@ if __name__ == "__main__":
 
         data = pipeline.preprocessor.transform(data)
         X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
+        X_train, _ = pipeline.get_test_data(X_train, test_group_vals=[2023])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -252,7 +253,7 @@ if __name__ == "__main__":
     # Compute statistics and plots
     try:
         print_message("Computing model statistics", logger, script_name)
-        group_name = data_config["split_variables"]["group_name"]
+        group_name = data_config["cv_variables"]["group_name"]
         save_file = get_file_path(
             general_config,
             v_number=general_config["version"],
@@ -269,7 +270,7 @@ if __name__ == "__main__":
 
             for key in pipeline.predictor_probabilities[outcome]:
                 # Get probabilities from each fold
-                y_test = y_train[X_train["OP_YEAR"] == key]
+                y_test = y_train[X_train[group_name] == key]
                 metric_dict_natural[key] = compute_score_metrics(
                     ["auroc", "log_loss"],
                     y_test[:, i],
