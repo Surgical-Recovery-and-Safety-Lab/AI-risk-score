@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # Compute statistics and plots
     try:
         print_message("Computing model statistics", logger, script_name)
-        group_name = data_config["split_variables"]["group_name"]
+        group_name = data_config["cv_variables"]["group_name"]
         save_file = get_file_path(
             general_config,
             v_number=general_config["version"],
