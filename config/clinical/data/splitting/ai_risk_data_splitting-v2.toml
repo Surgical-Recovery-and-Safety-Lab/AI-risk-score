@@ -1,6 +1,11 @@
 [split_variables]
-temporal_k_fold = false
-n_splits = 2
+group_name = "OP_YEAR"
+drop = true
+
+[cv_variables]
+group_k_fold = true
+group_name = "DHB_NAME"
+drop = false
+n_splits = 20
 shuffle = true
 random_state = 42
-group_name = ""

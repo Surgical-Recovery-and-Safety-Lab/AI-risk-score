@@ -1,15 +1,8 @@
 [preprocessing]
-preprocess = true # Perform preprocessing if true
+preprocess = true  # Perform preprocessing if true
 
-[preprocessing.ordinal_encoder]
-# List of features to label encode
+[preprocessing.bin]
+# List of features to power transform
 feature_list = [
-  "SEX_ORIGINAL",
-  "GCH2018_ORIGINAL",
-  "FACILITY",
-  "ETHNICITY_ORIGINAL",
-  "ADMISSION_ACUITY",
-  "ADMISSION_SOURCE",
-  "CATEGORY_LEVEL_1",
-  "CATEGORY_LEVEL_2",
+  "M3_SCORE",
 ]

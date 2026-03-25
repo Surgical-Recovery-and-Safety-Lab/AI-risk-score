@@ -1,8 +1,0 @@
-[preprocessing]
-preprocess = true  # Perform preprocessing if true
-
-[preprocessing.bin]
-# List of features to power transform
-feature_list = [
-  "M3_SCORE",
-]
