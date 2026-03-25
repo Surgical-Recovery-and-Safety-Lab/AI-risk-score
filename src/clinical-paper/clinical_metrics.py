@@ -15,6 +15,7 @@ import numpy as np
 from constants import LABEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
+
 from medpipe import (
     compute_all_CI,
     compute_score_metrics,
@@ -163,14 +164,14 @@ def plot_metrics_CI(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
+        description="Extract metrics from a trained Pipeline"
     )
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
         help="Path to the general configuration file",
     )
-    parser.add_argument("--version", help="Version number overload for multiprocessing")
+    parser.add_argument("--version", help="Version number overload")
     parser.add_argument(
         "--no-plots", action="store_false", help="Flag used to turn off plotting"
     )

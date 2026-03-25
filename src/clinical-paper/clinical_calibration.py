@@ -12,8 +12,12 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+from constants import COLOUR_MAP, LABEL_MAP, MODEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from sklearn.calibration import calibration_curve
+
 from medpipe import (
     exception_handler,
     extract_labels,
@@ -26,10 +30,6 @@ from medpipe import (
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from medpipe.utils.exceptions import file_checks
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from sklearn.calibration import calibration_curve
-
-from constants import COLOUR_MAP, LABEL_MAP, MODEL_MAP
 
 
 def plot_clinical_calibration(
@@ -226,14 +226,14 @@ def plot_clinical_calibration(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create and train a Pipeline of machine learning models"
+        description="Plot the global calibration of each outcome"
     )
     parser.add_argument(
         "model_config_file",
         metavar="model-config-file",
         help="Path to the general configuration file",
     )
-    parser.add_argument("--version", help="Version number overload for multiprocessing")
+    parser.add_argument("--version", help="Version number overload")
     parser.add_argument(
         "--no-plots", action="store_false", help="Flag used to turn off plotting"
     )
