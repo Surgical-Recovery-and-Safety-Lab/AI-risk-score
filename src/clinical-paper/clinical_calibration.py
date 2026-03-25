@@ -114,21 +114,18 @@ def plot_clinical_calibration(
     )
 
     boots = []
+
     for _ in range(n_bootstraps):
         idx = np.random.choice(len(y_test), len(y_test), replace=True)
-        prob_true_boot, _ = calibration_curve(
+        prob_true_boot, prob_pred_boot = calibration_curve(
             y_test[idx],
             proba_list[idx],
             **calibration_kwargs,
         )
-        if len(prob_true_boot) == len(prob_true):
-            boots.append(prob_true_boot)
+        boots.append(np.interp(prob_pred, prob_pred_boot, prob_true_boot))
 
-        try:
-            lower = np.percentile(boots, 2.5, axis=0)
-            upper = np.percentile(boots, 97.5, axis=0)
-        except IndexError:
-            breakpoint()
+    lower = np.percentile(boots, 2.5, axis=0)
+    upper = np.percentile(boots, 97.5, axis=0)
 
     ax.plot(
         prob_pred,
@@ -189,10 +186,7 @@ def plot_clinical_calibration(
     divider = make_axes_locatable(ax)
     ax_dist = divider.append_axes("bottom", 0.5, pad=0.1)
 
-    if "n_bins" in calibration_kwargs.keys():
-        bins = np.linspace(0, 1, calibration_kwargs["n_bins"] + 1)
-    else:
-        bins = np.linspace(0, 1, 21)
+    bins = np.linspace(0, 1, 21)
 
     ax_dist.hist(
         proba_list,
