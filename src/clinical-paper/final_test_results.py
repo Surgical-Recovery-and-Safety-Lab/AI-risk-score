@@ -10,12 +10,11 @@ import argparse
 import pathlib
 import sys
 
-from constants import COLOUR_MAP, LABEL_MAP, MODEL_MAP
-
 from medpipe import (
     compute_score_metrics,
     exception_handler,
     extract_labels,
+    get_positive_proba,
     load_data_from_csv,
     load_pipeline,
     print_message,
@@ -23,6 +22,10 @@ from medpipe import (
     setup_logger,
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
+from sklearn.calibration import calibration_curve
+from sklearn.linear_model import LinearRegression
+
+from constants import MODEL_MAP
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -125,11 +128,26 @@ if __name__ == "__main__":
             y_pred_proba = pipeline.predict_proba(
                 X_test, label_list=outcome, model_type=MODEL_MAP[outcome]
             )
+
+            prob_true, prob_pred = calibration_curve(
+                y_test[:, i],
+                get_positive_proba(y_pred_proba).squeeze(),
+                n_bins=10,
+                strategy="quantile",
+            )
+            lr = LinearRegression().fit(
+                prob_pred.reshape([-1, 1]), prob_true.reshape([-1, 1])
+            )
+            slope = lr.coef_[0]
+            intercept = lr.intercept_
             metrics = compute_score_metrics(
                 ["auroc", "log_loss"], y_test[:, i], y_pred_proba
             )
             print_message(
-                f"  AUROC: {metrics['auroc'][0]:.2f} |  Log loss: {metrics['log_loss'][0]:.2f}",
+                f"  AUROC: {metrics['auroc'][0]:.2f} |"
+                f"  Log loss: {metrics['log_loss'][0]:.2f} |"
+                f" Calibration slope {slope[0]:.2f} |"
+                f" Calibration intercept {intercept[0]:.2f}",
                 logger,
                 script_name,
             )
