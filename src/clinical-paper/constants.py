@@ -6,30 +6,6 @@ constants.py
 Constants for the clinical paper.
 """
 
-MODEL_MAP = {
-    "MORTALITY_30D": "calibrator",
-    "MORTALITY_90D": "calibrator",
-    "MORTALITY_1Y": "calibrator",
-    "READMIT_ACUTE_30D": "calibrator",
-    "READMIT_ACUTE_90D": "predictor",
-    "ANY_COMP": "calibrator",
-    "SSI": "calibrator",
-    "VTE": "predictor",
-    "CARDIAC_ARREST": "predictor",
-    "SEPSIS": "predictor",
-    "RESPIRATORY_FAILURE": "calibrator",
-    "SHOCK": "predictor",
-    "STROKE": "calibrator",
-    "AKI": "calibrator",
-    "CARDIAC_ARRHYTHMIA": "predictor",
-    "DELIRIUM": "predictor",
-    "GI_BLEEDING": "calibrator",
-    "HAEMORRHAGE": "predictor",
-    "IMPLANT_GRAFT": "calibrator",
-    "MYOCARDIAL_INFARCTION": "calibrator",
-    "PNEUMONIA": "predictor",
-    "UTI": "calibrator",
-}
 COLOUR_MAP = {
     "MORTALITY_30D": "#33367A",
     "MORTALITY_90D": "#33367A",
