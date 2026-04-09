@@ -15,7 +15,6 @@ COLOUR_MAP = {
     "ANY_COMP": "#96690E",
     "SSI": "#2D90D8",
     "VTE": "#2D90D8",
-    "CARDIAC_ARREST": "#2D90D8",
     "SEPSIS": "#2D90D8",
     "RESPIRATORY_FAILURE": "#2D90D8",
     "SHOCK": "#2D90D8",
@@ -26,7 +25,7 @@ COLOUR_MAP = {
     "GI_BLEEDING": "#2D90D8",
     "HAEMORRHAGE": "#2D90D8",
     "IMPLANT_GRAFT": "#2D90D8",
-    "MYOCARDIAL_INFARCTION": "#2D90D8",
+    "MYOCARDIAL_EVENT": "#2D90D8",
     "PNEUMONIA": "#2D90D8",
     "UTI": "#2D90D8",
 }
@@ -39,7 +38,6 @@ LABEL_MAP = {
     "ANY_COMP": "Any complications",
     "SSI": "SSI",
     "VTE": "VTE",
-    "CARDIAC_ARREST": "Cardiac arrest",
     "SEPSIS": "Sepsis",
     "RESPIRATORY_FAILURE": "Respiratory failure",
     "SHOCK": "Shock",
@@ -50,7 +48,7 @@ LABEL_MAP = {
     "GI_BLEEDING": "GI bleeding",
     "HAEMORRHAGE": "Haemorrhage",
     "IMPLANT_GRAFT": "Implant / graft complications",
-    "MYOCARDIAL_INFARCTION": "Myocardial infarction",
+    "MYOCARDIAL_EVENT": "Myocardial event",
     "PNEUMONIA": "Pneumonia",
     "UTI": "UTI",
 }
