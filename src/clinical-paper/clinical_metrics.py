@@ -277,29 +277,12 @@ if __name__ == "__main__":
                     y_test[:, i],
                     get_full_proba(pipeline.predictor_probabilities[outcome][key]),
                 )
-                metric_dict_recal[key] = compute_score_metrics(
-                    ["auroc", "log_loss"],
-                    y_test[:, i],
-                    get_full_proba(pipeline.calibrator_probabilities[outcome][key]),
-                )
-
             ci_dict_natural = compute_all_CI(metric_dict_natural)
-            ci_dict_recal = compute_all_CI(metric_dict_recal)
-
-            # Merge both dictionaries natural then recalibrated
-            ci_dict = {}
-            for key, value in ci_dict_natural.items():
-                val = (
-                    np.append(value[0], ci_dict_recal[key][0]),
-                    np.append(value[1], ci_dict_recal[key][1]),
-                    np.append(value[2], ci_dict_recal[key][2]),
-                )
-                ci_dict[key] = val
 
             plot_metrics_CI(
-                ci_dict,
+                ci_dict_natural,
                 outcome,
-                ["Natural", "Recalibrated"],
+                ["Natural"],
                 dpi=300,
                 no_plots=args.no_plots,
                 save_path=save_file + f"_{outcome}_metrics",
