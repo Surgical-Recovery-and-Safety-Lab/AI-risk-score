@@ -96,7 +96,7 @@ if __name__ == "__main__":
         pipeline = load_pipeline(load_file)
 
         data = pipeline.preprocessor.transform(data)
-        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
+        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024, 2023])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
