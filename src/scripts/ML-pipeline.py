@@ -101,10 +101,16 @@ if __name__ == "__main__":
                 data_config, v_number=data_version[:4]  # Use only first 2 numbers
             )
         )
+        if "ASA" in data.columns:
+            data.fillna({"ASA": 0}, inplace=True)
+        if "DHB_NAME" in data.columns:
+            # Remove Overseas and undefined cases
+            list_to_remove = ["Overseas", "Overseas and undefined"]
+            data = data[data["DHB_NAME"].isin(list_to_remove) == False]
 
         if not args.load:
             pipeline = Pipeline(general_config, logger)
-            X_train, _ = pipeline.get_test_data(data)
+            X_train, _ = pipeline.get_test_data(data, test_group_vals=[2023, 2024])
             pipeline.run(X_train)
 
             print_message("Saving pipeline", logger, script_name)
@@ -125,7 +131,7 @@ if __name__ == "__main__":
             pipeline = load_pipeline(load_file)
 
         data = pipeline.preprocessor.transform(data)
-        X_train, X_test = pipeline.get_test_data(data)
+        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2023, 2024])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
