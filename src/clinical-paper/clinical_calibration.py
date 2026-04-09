@@ -12,12 +12,8 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from constants import COLOUR_MAP, LABEL_MAP, MODEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from sklearn.calibration import calibration_curve
-
 from medpipe import (
     exception_handler,
     extract_labels,
@@ -30,6 +26,10 @@ from medpipe import (
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from medpipe.utils.exceptions import file_checks
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from sklearn.calibration import calibration_curve
+
+from constants import COLOUR_MAP, LABEL_MAP
 
 
 def plot_clinical_calibration(

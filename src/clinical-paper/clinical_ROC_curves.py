@@ -26,7 +26,6 @@ from medpipe import (
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from medpipe.utils.exceptions import file_checks
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.metrics import roc_curve
 
 from constants import COLOUR_MAP, LABEL_MAP

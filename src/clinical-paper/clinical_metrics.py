@@ -12,10 +12,8 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from constants import LABEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
-
 from medpipe import (
     compute_all_CI,
     compute_score_metrics,
@@ -29,6 +27,8 @@ from medpipe import (
     setup_logger,
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
+
+from constants import LABEL_MAP
 
 
 def plot_metrics_CI(
