@@ -10,10 +10,8 @@ import argparse
 import pathlib
 import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes._axes import Axes
-from matplotlib.figure import Figure
+import pandas as pd
 from medpipe import (
     compute_all_CI,
     compute_score_metrics,
@@ -27,140 +25,6 @@ from medpipe import (
     setup_logger,
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
-
-from constants import LABEL_MAP
-
-
-def plot_metrics_CI(
-    ci_dict,
-    outcome,
-    label_list,
-    save_path="",
-    no_plots=False,
-    extension=".png",
-    **kwargs,
-):
-    """
-    Plots the metrics with confidence intrevals for each fold.
-
-    Parameters
-    ----------
-    ci_dict : dict[str, tuple(float, float, float)]
-        Dictionary containing the metric value and confidence intervals
-        for the natural and recalibrated model.
-    ci_dict_recal : dict[str, tuple(float, float, float)]
-        Dictionary containing the metric value and confidence intervals
-        for the recalibrated model.
-    outcome : str
-        Name of the outcome for the title.
-    label_list : list[str]
-        List of label for the legend.
-    save_path : str, default: []
-        Path to the save file.
-    no_plots : bool, default: False
-        Flag used to plot the figure or not.
-    extension : str, default: ".png"
-        Extension to save figure in.
-    **kwargs
-        Extra arguments for the figure or axes objects.
-
-    Returns
-    -------
-    None
-        Nothing is returned.
-
-    """
-    # Split arguments based on where they should be sent
-    ax_kwargs = {key: value for key, value in kwargs.items() if key in dir(Axes)}
-    fig_kwargs = {key: value for key, value in kwargs.items() if key in dir(Figure)}
-
-    # Set up the figure and axis
-    dims = (1, 3)
-    fig, ax = plt.subplots(
-        nrows=dims[0],
-        ncols=dims[1],
-        **fig_kwargs,
-    )
-    colours = [
-        "#2D90D8",
-        "#33367A",
-        "#96690E",
-        "#CDB4DB",
-        "#F2CC8F",
-    ]
-
-    y_labels = {"auroc": "AUROC", "log_loss": "Log loss"}
-
-    bar_width = 0.1
-    x = np.arange(len(label_list)) * bar_width
-
-    # Loop through each metric
-    for i, (key, values) in enumerate(ci_dict.items()):
-        for j in range(len(values[0])):
-            value = values[0][j]
-            lower_b = values[1][j]
-            upper_b = values[2][j]
-            ax[i].bar(
-                x[j],
-                value,
-                width=bar_width,
-                color=colours[j],
-                edgecolor=(0, 0, 0, 1),
-                label=label_list[j],
-            )
-
-            ax[i].errorbar(
-                x[j],
-                value,
-                yerr=np.expand_dims([value - lower_b, upper_b - value], 1),
-                fmt="none",
-                color="black",
-                capsize=5,
-            )
-
-        # Customize the chart
-        ax[i].set_title(y_labels[key], fontweight="bold")
-        if key != "log_loss":
-            ax[i].set_ylim([0, 1.05])
-        else:
-            ax[i].set_ylim([0, 0.35])
-        ax[i].spines["top"].set_visible(False)
-        ax[i].spines["right"].set_visible(False)
-
-        # Set the x-ticks to be at the center of each group of bars
-        ax[i].set_xticks([])
-        ax[i].set_xticklabels([])
-
-    # Place one legend for the whole figure
-    handles, labels = ax[0].get_legend_handles_labels()
-    fig.legend(
-        handles[0 : len(label_list)],
-        labels[0 : len(label_list)],
-        loc="center right",
-        bbox_to_anchor=(1.0, 0.55),
-        title="Models",
-        frameon=False,
-    )
-
-    ax[2].axis("off")
-    fig.suptitle(f"{LABEL_MAP[outcome]}", fontweight="bold", x=0.35)
-
-    # Set ax_kwargs to override if needed
-    for key, val in ax_kwargs.items():
-        getattr(ax, key)(val)
-
-    # Adjust the size of the plots
-    plt.tight_layout()
-
-    # Save and view
-    if save_path:
-        save_file = save_path + extension
-        plt.savefig(save_file)
-    if no_plots:
-        plt.show()
-
-    plt.close()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -262,12 +126,14 @@ if __name__ == "__main__":
             exists=False,
         )
         extension = general_config["fig_parameters"]["extension"]
+        df = pd.DataFrame()
+        long_df = pd.DataFrame()
+        long_dict = {}
 
         for i, outcome in enumerate(pipeline.label_list):
             # Iterate over each outcome to calculate the training metrics
             print_message(outcome, logger, script_name)
             metric_dict_natural = {}
-            metric_dict_recal = {}
 
             for key in pipeline.predictor_probabilities[outcome]:
                 # Get probabilities from each fold
@@ -277,17 +143,27 @@ if __name__ == "__main__":
                     y_test[:, i],
                     get_full_proba(pipeline.predictor_probabilities[outcome][key]),
                 )
+                long_dict[key] = {
+                    f"{outcome}_auroc": metric_dict_natural[key]["auroc"][0],
+                    f"{outcome}_log_loss": metric_dict_natural[key]["log_loss"][0],
+                }
             ci_dict_natural = compute_all_CI(metric_dict_natural)
 
-            plot_metrics_CI(
-                ci_dict_natural,
-                outcome,
-                ["Natural"],
-                dpi=300,
-                no_plots=args.no_plots,
-                save_path=save_file + f"_{outcome}_metrics",
-                extension=extension,
+            df_dict = {}
+            df_dict["outcome"] = outcome
+            df_dict["auroc"] = (
+                f"{ci_dict_natural["auroc"][0][0]:.2f} ({ci_dict_natural["auroc"][1][0]:.2f} -- {ci_dict_natural["auroc"][2][0]:.2f})"
             )
+            df_dict["log_loss"] = (
+                f"{ci_dict_natural["log_loss"][0][0]:.2f} ({ci_dict_natural["log_loss"][1][0]:.2f} -- {ci_dict_natural["log_loss"][2][0]:.2f})"
+            )
+            df = pd.concat([df, pd.DataFrame(df_dict, index=[i])], ignore_index=True)
+            long_df = pd.concat(
+                [long_df, pd.DataFrame(long_dict)],
+            )
+
+        df.to_csv(save_file + "_training_table.csv", index=False)
+        long_df.to_csv(save_file + "_DHB_table.csv", index=True)
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
