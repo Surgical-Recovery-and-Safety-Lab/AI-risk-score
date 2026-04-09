@@ -25,8 +25,6 @@ from medpipe.utils.config import get_configuration, get_file_path, split_version
 from sklearn.calibration import calibration_curve
 from sklearn.linear_model import LinearRegression
 
-from constants import MODEL_MAP
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Plot the global calibration of each outcome"
@@ -128,7 +126,7 @@ if __name__ == "__main__":
         for i, outcome in enumerate(pipeline.label_list):
             print_message(outcome, logger, script_name)
             y_pred_proba = pipeline.predict_proba(
-                X_test, label_list=outcome, model_type=MODEL_MAP[outcome]
+                X_test, label_list=outcome, model_type="predictor"
             )
 
             prob_true, prob_pred = calibration_curve(
