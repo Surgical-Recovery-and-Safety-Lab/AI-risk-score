@@ -326,7 +326,9 @@ if __name__ == "__main__":
         for i, outcome in enumerate(pipeline.label_list):
             print_message(outcome, logger, script_name)
             y_pred_proba = pipeline.predict_proba(
-                X_test, label_list=outcome, model_type=MODEL_MAP[outcome]
+                X_test,
+                label_list=outcome,
+                model_type="predictor",
             )
             plot_clinical_calibration(
                 y_test[:, i],
