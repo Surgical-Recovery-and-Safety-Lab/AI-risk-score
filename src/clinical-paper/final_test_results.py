@@ -87,6 +87,8 @@ if __name__ == "__main__":
                 data_config, v_number=data_version[:4]  # Use only first 2 numbers
             )
         )
+        data.fillna({"ASA": 0}, inplace=True)  # Fill ASA nan values to 0
+
         # Load model
         print_message("Loading model", logger, script_name)
         load_file = get_file_path(
