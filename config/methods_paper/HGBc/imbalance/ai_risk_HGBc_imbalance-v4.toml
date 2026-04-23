@@ -3,5 +3,5 @@ weighting_fn = ""
 
 [sampler]
 sampler_fn = "group_random_oversampler"
-target_ratio = 0.5
+reduction_factor = 0.5
 hard_percent = 0.25

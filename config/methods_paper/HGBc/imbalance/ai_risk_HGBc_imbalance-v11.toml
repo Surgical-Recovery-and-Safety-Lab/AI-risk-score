@@ -3,5 +3,5 @@ weighting_fn = ""
 
 [sampler]
 sampler_fn = "group_random_undersampler"
-target_ratio = 0.25
+reduction_factor = 0.25
 hard_percent = 0.25
