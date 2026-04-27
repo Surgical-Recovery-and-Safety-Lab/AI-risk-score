@@ -35,6 +35,7 @@ def plot_recalibration(
     proba_list,
     labels,
     n_bootstraps=1000,
+    outcome="",
     save_path="",
     extension=".png",
     show_fig=True,
@@ -61,6 +62,8 @@ def plot_recalibration(
         Flag to plot the probability distribution as well.
     n_bootstraps : int, default: 200
         Number of iteration for the bootstrap.
+    outcome : str, default: ""
+        Outcome that is being plotted.
     save_path : str, default: []
         Path to the save file.
     extension : str, default: ".png"
@@ -147,6 +150,47 @@ def plot_recalibration(
             alpha=0.5,
             label=f"{labels[j]} 95% CI",
         )
+
+        if outcome == "MORTALITY_90D":
+            # Add inset if calibration curve does not cover enough of the graph
+            # Remove spines for aesthetics
+            plt.gca().spines["top"].set_visible(False)
+            plt.gca().spines["right"].set_visible(False)
+
+            if j == 0:
+                # Create inset only in first loop iteration
+                ax_ins = ax.inset_axes(
+                    [0.05, 0.5, 0.4, 0.4],
+                    xlim=(-0.02, 0.2),
+                    ylim=(-0.02, 0.2),
+                    yticklabels=[],
+                    xticklabels=[],
+                )
+                # Connect the inset to the zoomed area in the main plot
+                ax.indicate_inset_zoom(ax_ins, edgecolor="black")
+
+                ax_ins.plot(  # Reference line
+                    np.linspace(0, max(prob_pred), 100),
+                    np.linspace(0, max(prob_pred), 100),
+                    "k--",
+                )
+
+            # Plot inset
+            ax_ins.plot(
+                prob_pred,
+                prob_true,
+                marker=".",
+                color=COLOUR_MAP[j],
+                label=labels[j],
+            )
+            ax_ins.fill_between(
+                prob_pred,
+                lower,
+                upper,
+                color=COLOUR_MAP[j],
+                alpha=0.5,
+                label=f"{labels[j]} 95% CI",
+            )
 
     # Create new plot for distribution
     divider = make_axes_locatable(ax)
@@ -315,6 +359,7 @@ if __name__ == "__main__":
                     ],
                     labels=labels[j],
                     distribution=True,
+                    outcome=outcome,
                     save_path=save_file + f"_{outcome}_{labels[j][0]}",
                     extension=extension,
                     show_fig=args.no_plots,
