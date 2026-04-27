@@ -200,7 +200,7 @@ if __name__ == "__main__":
                 v_number=general_config["version"],
             )
             pipeline = load_pipeline(load_file)
-            X_train, X_test = pipeline.get_test_data(data.dropna())
+            X_train, X_test = pipeline.get_test_data(data.dropna(), [2024])
             X_train, y_train = extract_labels(X_train, pipeline.label_list)
             tmp_metric_dict = {}
             tmp_metric_dict_pred = {}

@@ -235,9 +235,7 @@ if __name__ == "__main__":
             )
             pipeline = load_pipeline(load_file)
             data = pipeline.transform(data)
-            X_train, X_test_24 = pipeline.get_test_data(data)
-            _, X_test_23 = pipeline.get_test_data(X_train)
-            X_test = pd.concat((X_test_24, X_test_23))
+            X_train, X_test = pipeline.get_test_data(data, [2024])
             X_test, y_test = extract_labels(X_test, pipeline.label_list)
             y_pred_proba.append(
                 get_positive_proba(
