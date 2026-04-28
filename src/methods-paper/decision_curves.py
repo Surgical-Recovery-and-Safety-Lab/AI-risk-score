@@ -52,6 +52,7 @@ if __name__ == "__main__":
     )
     extension = general_config["fig_parameters"]["extension"]
     outcomes = ["MORTALITY_90D", "ANY_COMP"]
+    titles = ["90-day mortality", "Any complications"]
     methods = ["Natural", "CSL", "SMOTE", "ROS", "RUS"]
     colours = ["#2D90D8", "#33367A", "#96690E", "#CDB4DB", "#F2CC8F", "#1D6968"]
     ylims = [(-0.0345, 0.0345), (-0.165, 0.165)]
@@ -134,6 +135,7 @@ if __name__ == "__main__":
         ax.set_xlabel("Decision threshold", fontweight="bold")
         ax.set_ylabel("Net benefit", fontweight="bold")
         ax.set_ylim(ylims[i])
+        ax.set_title(f"{titles[i]}", fontweight="bold")
 
         plt.gca().spines["top"].set_visible(False)
         plt.gca().spines["right"].set_visible(False)
