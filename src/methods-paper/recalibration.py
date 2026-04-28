@@ -303,12 +303,14 @@ if __name__ == "__main__":
 
         # Define all versions to load as tuples
         versions = [
+            ("v0.1.1.1-a.1.2.1", "v0.1.1.1-a.1.2.2"),
             ("v0.1.1.1-a.2.2.1", "v0.1.1.1-a.2.2.2"),
             ("v0.1.1.1-a.6.2.1", "v0.1.1.1-a.6.2.2"),
             ("v0.1.1.1-a.10.2.1", "v0.1.1.1-a.10.2.2"),
             ("v0.1.1.1-a.14.2.1", "v0.1.1.1-a.14.2.2"),
         ]
         labels = [
+            ("Natural", "Platt recalibration", "Isotonic recalibration"),
             ("CSL", "Platt recalibration", "Isotonic recalibration"),
             ("SMOTE", "Platt recalibration", "Isotonic recalibration"),
             ("ROS", "Platt recalibration", "Isotonic recalibration"),
