@@ -56,7 +56,7 @@ def print_feature(dataset, input) -> None:
     print_str = "  \\multicolumn{1}{l}{\\begin{tabular}[c]{@{}l@{}}\\\\ "
     for val in vals:
         sum_val = np.sum(data == val)
-        print_str += f"{sum_val:,} ({100*sum_val/len(data):.1f})\\\\ "
+        print_str += f"{sum_val:,} ({100*sum_val/len(data):.3f})\\\\ "
     print_str += "\\end{tabular}} &"
     print(print_str)
 
