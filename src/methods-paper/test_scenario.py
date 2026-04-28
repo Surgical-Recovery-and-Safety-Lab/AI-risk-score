@@ -66,9 +66,7 @@ if __name__ == "__main__":
             v_number=general_config["version"],
         )
         pipeline = load_pipeline(load_file)
-        X_train, X_test_24 = pipeline.get_test_data(pipeline.transform(data))
-        _, X_test_23 = pipeline.get_test_data(X_train)
-        X_test = pd.concat((X_test_24, X_test_23))
+        _, X_test = pipeline.get_test_data(pipeline.transform(data), [2024])
         X_test, y_test = extract_labels(X_test, pipeline.label_list)
 
         y_pred_proba = np.zeros(y_test.shape)
