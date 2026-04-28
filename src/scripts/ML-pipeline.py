@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         if not args.load:
             pipeline = Pipeline(general_config, logger)
-            X_train, _ = pipeline.get_test_data(data, test_group_vals=[2023, 2024])
+            X_train, _ = pipeline.get_test_data(data, test_group_vals=[2024])
             pipeline.run(X_train)
 
             print_message("Saving pipeline", logger, script_name)
@@ -131,7 +131,7 @@ if __name__ == "__main__":
             pipeline = load_pipeline(load_file)
 
         data = pipeline.preprocessor.transform(data)
-        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2023, 2024])
+        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
