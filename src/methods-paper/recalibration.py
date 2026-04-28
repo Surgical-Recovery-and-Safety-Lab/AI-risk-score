@@ -200,7 +200,6 @@ def plot_recalibration(
 
     ax_dist.hist(
         proba_list,
-        stacked=True,
         color=COLOUR_MAP[:3],
         edgecolor="black",
         bins=bins,
@@ -220,7 +219,7 @@ def plot_recalibration(
     for key, val in ax_kwargs.items():
         getattr(ax, key)(val)
 
-    ax.legend(loc="upper right", bbox_to_anchor=(1.75, 0.9), title="Key", frameon=False)
+    # ax.legend(loc="upper right", bbox_to_anchor=(1.75, 0.9), title="Key", frameon=False)
 
     fig.subplots_adjust(right=0.63, bottom=0.14)
 
