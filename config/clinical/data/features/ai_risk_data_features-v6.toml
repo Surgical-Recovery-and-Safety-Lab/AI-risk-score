@@ -1,0 +1,7 @@
+[features]
+feature_list = [
+  "OP_DESC",
+  "CATEGORY_LEVEL_1",
+  "CATEGORY_LEVEL_2",
+  "OP_SEVERITY",
+]
