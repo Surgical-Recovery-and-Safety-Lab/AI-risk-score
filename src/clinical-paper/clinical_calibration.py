@@ -12,6 +12,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+from constants import COLOUR_MAP, LABEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from medpipe import (
@@ -26,10 +27,8 @@ from medpipe import (
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from medpipe.utils.exceptions import file_checks
+from ml_insights import SplineCalib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from sklearn.calibration import calibration_curve
-
-from constants import COLOUR_MAP, LABEL_MAP
 
 
 def plot_clinical_calibration(
@@ -41,7 +40,6 @@ def plot_clinical_calibration(
     save_path="",
     extension=".png",
     show_fig=True,
-    calibration_kwargs={},
     **kwargs,
 ):
     """
@@ -72,8 +70,6 @@ def plot_clinical_calibration(
         Extension to save figure in.
     show_fig : bool, default: True
         Flag to show the figure.
-    calibration_kwargs : dict[str, value], default: {}
-        Extra arguments for the calibration function.
     **kwargs
         Extra arguments for the figure or axes objects.
 
@@ -89,6 +85,7 @@ def plot_clinical_calibration(
 
     # Set figure properties
     fig, ax = plt.subplots(**fig_kwargs)
+    grid_resolution = 100
 
     # Set title
     title = kwargs["set_title"] if "set_title" in kwargs.keys() else ""
@@ -101,86 +98,45 @@ def plot_clinical_calibration(
 
     # Plot perfect calibration
     ax.plot(
-        np.linspace(0, 1, 100),
-        np.linspace(0, 1, 100),
+        np.linspace(0, 1, grid_resolution),
+        np.linspace(0, 1, grid_resolution),
         "k--",
         label="Perfectly calibrated",
     )
 
-    prob_true, prob_pred = calibration_curve(
-        y_test,
-        proba_list,
-        **calibration_kwargs,
-    )
+    grid = np.linspace(0, 1, grid_resolution)
+    main_spline = SplineCalib()
+    main_spline.fit(proba_list, y_test)
 
-    boots = []
+    boots = boot_curves = np.zeros((n_bootstraps, grid_resolution))
 
-    for _ in range(n_bootstraps):
+    for i in range(n_bootstraps):
         idx = np.random.choice(len(y_test), len(y_test), replace=True)
-        prob_true_boot, prob_pred_boot = calibration_curve(
-            y_test[idx],
-            proba_list[idx],
-            **calibration_kwargs,
-        )
-        boots.append(np.interp(prob_pred, prob_pred_boot, prob_true_boot))
+        try:
+            spline_boot = SplineCalib()
+            spline_boot.fit(proba_list[idx], y_test[idx])
+            boot_curves[i, :] = spline_boot.predict(grid)
+        except:
+            i -= 1
+            continue
 
     lower = np.percentile(boots, 2.5, axis=0)
     upper = np.percentile(boots, 97.5, axis=0)
 
     ax.plot(
-        prob_pred,
-        prob_true,
-        marker=".",
+        grid,
+        main_spline.predict(grid),
         color=COLOUR_MAP[outcome],
         label=label,
     )
     ax.fill_between(
-        prob_pred,
+        grid,
         lower,
         upper,
         color=COLOUR_MAP[outcome],
         alpha=0.5,
         label=f"{label} 95% CI",
     )
-
-    if max(prob_pred) < 0.4:
-        # Remove spines for aesthetics
-        plt.gca().spines["top"].set_visible(False)
-        plt.gca().spines["right"].set_visible(False)
-
-        ax_ins = ax.inset_axes(
-            [0.5, 0.1, 0.5, 0.5],
-            yticklabels=[],
-        )
-        ax_ins.plot(
-            prob_pred,
-            prob_true,
-            marker=".",
-            color=COLOUR_MAP[outcome],
-        )
-        ax_ins.fill_between(
-            prob_pred,
-            lower,
-            upper,
-            color=COLOUR_MAP[outcome],
-            alpha=0.5,
-        )
-        ax_ins.plot(
-            np.linspace(0, max(prob_pred), 100),
-            np.linspace(0, max(prob_pred), 100),
-            "k--",
-        )
-
-        # Set limits to be square based on highest value
-        _, x_top = ax_ins.get_xlim()
-        _, y_top = ax_ins.get_ylim()
-        if x_top > y_top:
-            ax_ins.set_ylim(ax_ins.get_xlim())
-        else:
-            ax_ins.set_xlim(ax_ins.get_ylim())
-
-        # Connect the inset to the zoomed area in the main plot
-        ax.indicate_inset_zoom(ax_ins, edgecolor="black")
 
     # Create new plot for distribution
     divider = make_axes_locatable(ax)
@@ -298,7 +254,8 @@ if __name__ == "__main__":
         pipeline = load_pipeline(load_file)
 
         data = pipeline.preprocessor.transform(data)
-        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2023, 2024])
+        data = data.drop("DHB_NAME", axis=1)
+        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -330,23 +287,26 @@ if __name__ == "__main__":
             y_pred_proba = pipeline.predict_proba(
                 X_test,
                 label_list=outcome,
-                model_type="predictor",
+                model_type="calibrator",
             )
+
+            y_pred_proba = np.squeeze(get_positive_proba(y_pred_proba))
+
             plot_clinical_calibration(
                 y_test[:, i],
-                get_positive_proba(y_pred_proba).squeeze(),
+                y_pred_proba,
                 outcome=outcome,
                 label="Calibration",
                 distribution=True,
                 save_path=save_file + f"_{outcome}_best_reliability_diagram",
                 extension=extension,
+                n_bootstraps=2,
                 show_fig=args.no_plots,
-                calibration_kwargs={"n_bins": 10, "strategy": "quantile"},
                 dpi=300,
                 figsize=(5, 5),
                 set_title=f"{LABEL_MAP[outcome]}",
             )
-
+            plt.close()
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
         exit(1)
