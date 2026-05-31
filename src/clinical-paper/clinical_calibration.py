@@ -108,16 +108,18 @@ def plot_clinical_calibration(
     main_spline = SplineCalib()
     main_spline.fit(proba_list, y_test)
 
-    boots = boot_curves = np.zeros((n_bootstraps, grid_resolution))
+    boots = np.zeros((n_bootstraps, grid_resolution))
+    i = 0
+    rng = np.random.default_rng()
 
-    for i in range(n_bootstraps):
-        idx = np.random.choice(len(y_test), len(y_test), replace=True)
+    while i < n_bootstraps:
+        idx = rng.choice(len(y_test), len(y_test), replace=True)
         try:
             spline_boot = SplineCalib()
             spline_boot.fit(proba_list[idx], y_test[idx])
-            boot_curves[i, :] = spline_boot.predict(grid)
-        except:
-            i -= 1
+            boots[i, :] = spline_boot.predict(grid)
+            i += 1
+        except Exception:
             continue
 
     lower = np.percentile(boots, 2.5, axis=0)
@@ -300,7 +302,7 @@ if __name__ == "__main__":
                 distribution=True,
                 save_path=save_file + f"_{outcome}_best_reliability_diagram",
                 extension=extension,
-                n_bootstraps=2,
+                n_bootstraps=4,
                 show_fig=args.no_plots,
                 dpi=300,
                 figsize=(5, 5),
