@@ -58,7 +58,7 @@ def plot_ROC_curve(
         Predicted outcome.
     label : str
         Labels for the legend.
-    n_bootstraps : int, default: 200
+    n_bootstraps : int, default: 1000
         Number of iteration for the bootstrap.
     save_path : str, default: []
         Path to the save file.
@@ -84,7 +84,7 @@ def plot_ROC_curve(
 
     # Set title
     title = kwargs["set_title"] if "set_title" in kwargs.keys() else ""
-    ax.set_title(title, fontweight="bold")
+    ax.set_title(title, fontweight="bold", fontsize=17)
     ax_kwargs.pop("set_title")
 
     # Remove spines for aesthetics
@@ -130,8 +130,8 @@ def plot_ROC_curve(
     plt.gca().spines["top"].set_visible(False)
     plt.gca().spines["right"].set_visible(False)
 
-    ax.set_xlabel("False positive rate", fontweight="bold")
-    ax.set_ylabel("True positive rate", fontweight="bold")
+    ax.set_xlabel("FPR", fontweight="bold", fontsize=15)
+    ax.set_ylabel("TPR", fontweight="bold", fontsize=15)
 
     # Set ax_kwargs to override if needed
     for key, val in ax_kwargs.items():
@@ -215,6 +215,7 @@ if __name__ == "__main__":
             )
         )
         data.fillna({"ASA": 0}, inplace=True)  # Fill ASA nan values to 0
+        data.drop("DHB_NAME", axis=1, inplace=True)  # Drop DHB
 
         # Load model
         print_message("Loading model", logger, script_name)
