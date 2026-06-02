@@ -139,7 +139,9 @@ if __name__ == "__main__":
         )
         pipeline = load_pipeline(load_file)
 
+        # Extract datasets
         X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2023, 2024])
+        X_cal, X_test = pipeline.get_test_data(X_test, test_group_vals=[2024])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
