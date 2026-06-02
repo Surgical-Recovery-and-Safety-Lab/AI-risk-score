@@ -22,6 +22,9 @@ from medpipe import (
     setup_logger,
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
+from scipy.special import logit
+from numpy import clip
+import statsmodels.api as sm
 from sklearn.calibration import calibration_curve
 from sklearn.linear_model import LinearRegression
 
@@ -86,6 +89,7 @@ if __name__ == "__main__":
             )
         )
         data.fillna({"ASA": 0}, inplace=True)  # Fill ASA nan values to 0
+        data.drop("DHB_NAME", axis=1, inplace=True)
 
         # Load model
         print_message("Loading model", logger, script_name)
@@ -126,28 +130,24 @@ if __name__ == "__main__":
         for i, outcome in enumerate(pipeline.label_list):
             print_message(outcome, logger, script_name)
             y_pred_proba = pipeline.predict_proba(
-                X_test, label_list=outcome, model_type="predictor"
+                X_test, label_list=outcome, model_type="calibrator"
             )
 
-            prob_true, prob_pred = calibration_curve(
-                y_test[:, i],
-                get_positive_proba(y_pred_proba).squeeze(),
-                n_bins=10,
-                strategy="quantile",
-            )
-            lr = LinearRegression().fit(
-                prob_pred.reshape([-1, 1]), prob_true.reshape([-1, 1])
-            )
-            slope = lr.coef_[0]
-            intercept = lr.intercept_
+            log_odds = logit(clip(get_positive_proba(y_pred_proba), 1e-15, 1-1e-15))
+            X = sm.add_constant(log_odds)
+            
+            calib_model = sm.Logit(y_test[:, i], X).fit()
+
+            intercept, slope = calib_model.params
+
             metrics = compute_score_metrics(
                 ["auroc", "log_loss"], y_test[:, i], y_pred_proba
             )
             print_message(
                 f"  AUROC: {metrics['auroc'][0]:.2f} |"
                 f"  Log loss: {metrics['log_loss'][0]:.2f} |"
-                f" Calibration slope {slope[0]:.2f} |"
-                f" Calibration intercept {intercept[0]:.2f}",
+                f" Calibration slope {slope:.2f} |"
+                f" Calibration intercept {intercept:.2f}",
                 logger,
                 script_name,
             )
