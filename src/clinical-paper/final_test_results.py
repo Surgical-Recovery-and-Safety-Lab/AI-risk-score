@@ -24,6 +24,7 @@ from medpipe import (
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from scipy.special import logit
 from numpy import clip
+import numpy as np
 import statsmodels.api as sm
 from sklearn.calibration import calibration_curve
 from sklearn.linear_model import LinearRegression
@@ -126,14 +127,16 @@ if __name__ == "__main__":
             exists=False,
         )
         extension = general_config["fig_parameters"]["extension"]
+        n_bootstraps = 1000
 
         for i, outcome in enumerate(pipeline.label_list):
             print_message(outcome, logger, script_name)
             y_pred_proba = pipeline.predict_proba(
                 X_test, label_list=outcome, model_type="calibrator"
             )
+            y_pred_pos = get_positive_proba(y_pred_proba)
 
-            log_odds = logit(clip(get_positive_proba(y_pred_proba), 1e-15, 1-1e-15))
+            log_odds = logit(clip(y_pred_pos, 1e-15, 1-1e-15))
             X = sm.add_constant(log_odds)
             
             calib_model = sm.Logit(y_test[:, i], X).fit()
@@ -143,14 +146,32 @@ if __name__ == "__main__":
             metrics = compute_score_metrics(
                 ["auroc", "log_loss"], y_test[:, i], y_pred_proba
             )
-            print_message(
-                f"  AUROC: {metrics['auroc'][0]:.2f} |"
-                f"  Log loss: {metrics['log_loss'][0]:.2f} |"
-                f" Calibration slope {slope:.2f} |"
-                f" Calibration intercept {intercept:.2f}",
-                logger,
-                script_name,
-            )
+
+            rng = np.random.default_rng()
+            boots = np.zeros((n_bootstraps, 4))  # Holds every metric bootstraps
+
+            for j in range(n_bootstraps):
+                idx = rng.choice(len(y_test), len(y_test), replace=True)
+                y_boot = y_pred_pos[idx]
+                log_odds = logit(clip(y_boot, 1e-15, 1-1e-15))
+                X = sm.add_constant(log_odds)
+                
+                calib_model = sm.Logit(y_test[idx, i], X).fit(disp=0)
+
+                boots[j, 0], boots[j, 1] = calib_model.params
+
+                _metrics = compute_score_metrics(
+                    ["auroc", "log_loss"], y_test[idx, i], y_pred_proba[idx]
+                )
+                boots[j, 2:4] = [_metrics['auroc'][0], _metrics['log_loss'][0]]
+
+            lower = np.percentile(boots, 2.5, axis=0)
+            upper = np.percentile(boots, 97.5, axis=0)
+
+            print(f"{metrics['auroc'][0]:.2f} ({lower[2]:.2f} -- {upper[2]:.2f})")
+            print(f"{metrics['log_loss'][0]:.2f} ({lower[3]:.2f} -- {upper[3]:.2f})")
+            print(f"{slope:.2f} ({lower[1]:.2f} -- {upper[1]:.2f})")
+            print(f"{intercept:.2f} ({lower[0]:.2f} -- {upper[0]:.2f})")
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
