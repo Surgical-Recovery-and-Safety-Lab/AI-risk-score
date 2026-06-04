@@ -35,6 +35,12 @@ METRIC_MAP = {
     "calibration_slope": "Calibration slope",
     "calibration_intercept": "Calibration intercept",
 }
+METRIC_MAX = {
+    "auroc": 0.05,
+    "log_loss": 0.10,
+    "calibration_slope": 0.15,
+    "calibration_intercept": 0.20,
+}
 
 COLOUR_MAP = [
     "#2D90D8",
@@ -59,7 +65,7 @@ COMPLICATION_MAP = {
     "DELIRIUM": "Delirium",
     "GI_BLEEDING": "GI bleeding",
     "HAEMORRHAGE": "Haemorrhage",
-    "IMPLANT_GRAFT": "Implant / graft complications",
+    "IMPLANT_GRAFT": "IGC",
     "MYOCARDIAL_EVENT": "Myocardial event",
     "RESPIRATORY_FAILURE": "Respiratory failure",
     "PNEUMONIA": "Pneumonia",
@@ -211,30 +217,54 @@ def strata_heatmap(
 
                 strata_plot_data.append(np.array(tmp_strata_data))
 
-        strata_plot_arr = np.squeeze(np.array(strata_plot_data)).T
-        max_val = np.percentile(np.abs(strata_plot_arr), 98)
+        strata_plot_arr = np.squeeze(np.array(strata_plot_data))
+        max_val = METRIC_MAX[metric]  # Set the scale depending on the metric
+
+        # Display heatmap
         im = ax.imshow(
             strata_plot_arr, cmap="seismic", aspect="equal", vmin=-max_val, vmax=max_val
         )
 
+        # Set colorbar and ticks
         fig.colorbar(im, ax=ax, cmap="seismic", shrink=0.8, extend="both")
-        ax.set_xticks(
+        ax.set_yticks(
             np.arange(len(strata_list)),
             labels=strata_list,
-            rotation=45,
-            rotation_mode="anchor",
-            ha="right",
         )
 
         outcome_label_list = [LABEL_MAP[ele] for ele in outcome_list]
-        ax.set_yticks(np.arange(len(outcome_list)), labels=outcome_label_list)
+        ax.set_xticks(
+            np.arange(len(outcome_list)),
+            labels=outcome_label_list,
+            rotation=-30,
+            rotation_mode="anchor",
+            ha="left",
+        )
         ax.set_xlabel("Strata", fontweight="bold")
         ax.set_ylabel("Outcomes", fontweight="bold")
 
+        # Add text
+        for i in range(len(outcome_label_list)):
+            for j in range(len(strata_list)):
+                colour = "k"
+                if np.abs(strata_plot_arr[j, i]) >= 0.5 * max_val:
+                    colour = "w"
+                ax.text(
+                    i,
+                    j,
+                    np.round(strata_plot_arr[j, i], 2),
+                    ha="center",
+                    va="center",
+                    color=colour,
+                    fontsize=6,
+                    fontweight="bold",
+                )
+
         ax.spines[:].set_visible(False)
+
         # Set white space between squares
-        ax.set_xticks(np.arange(len(strata_list) + 1) - 0.5, minor=True)
-        ax.set_yticks(np.arange(len(outcome_list) + 1) - 0.5, minor=True)
+        ax.set_yticks(np.arange(len(strata_list) + 1) - 0.5, minor=True)
+        ax.set_xticks(np.arange(len(outcome_list) + 1) - 0.5, minor=True)
         ax.grid(which="minor", color="k", linestyle="-", linewidth=1)
         ax.tick_params(which="minor", bottom=False, left=False)
 
