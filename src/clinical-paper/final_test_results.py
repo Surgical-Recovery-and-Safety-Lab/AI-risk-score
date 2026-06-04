@@ -139,7 +139,7 @@ if __name__ == "__main__":
             log_odds = logit(clip(y_pred_pos, 1e-15, 1-1e-15))
             X = sm.add_constant(log_odds)
             
-            calib_model = sm.Logit(y_test[:, i], X).fit()
+            calib_model = sm.Logit(y_test[:, i], X).fit(disp=0)
 
             intercept, slope = calib_model.params
 
