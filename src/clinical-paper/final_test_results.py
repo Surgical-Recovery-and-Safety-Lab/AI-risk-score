@@ -10,6 +10,8 @@ import argparse
 import pathlib
 import sys
 
+import numpy as np
+import statsmodels.api as sm
 from medpipe import (
     compute_score_metrics,
     exception_handler,
@@ -23,11 +25,6 @@ from medpipe import (
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
 from scipy.special import logit
-from numpy import clip
-import numpy as np
-import statsmodels.api as sm
-from sklearn.calibration import calibration_curve
-from sklearn.linear_model import LinearRegression
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -136,9 +133,9 @@ if __name__ == "__main__":
             )
             y_pred_pos = get_positive_proba(y_pred_proba)
 
-            log_odds = logit(clip(y_pred_pos, 1e-15, 1-1e-15))
+            log_odds = logit(np.clip(y_pred_pos, 1e-15, 1 - 1e-15))
             X = sm.add_constant(log_odds)
-            
+
             calib_model = sm.Logit(y_test[:, i], X).fit(disp=0)
 
             intercept, slope = calib_model.params
@@ -153,9 +150,9 @@ if __name__ == "__main__":
             for j in range(n_bootstraps):
                 idx = rng.choice(len(y_test), len(y_test), replace=True)
                 y_boot = y_pred_pos[idx]
-                log_odds = logit(clip(y_boot, 1e-15, 1-1e-15))
+                log_odds = logit(np.clip(y_boot, 1e-15, 1 - 1e-15))
                 X = sm.add_constant(log_odds)
-                
+
                 calib_model = sm.Logit(y_test[idx, i], X).fit(disp=0)
 
                 boots[j, 0], boots[j, 1] = calib_model.params
@@ -163,7 +160,7 @@ if __name__ == "__main__":
                 _metrics = compute_score_metrics(
                     ["auroc", "log_loss"], y_test[idx, i], y_pred_proba[idx]
                 )
-                boots[j, 2:4] = [_metrics['auroc'][0], _metrics['log_loss'][0]]
+                boots[j, 2:4] = [_metrics["auroc"][0], _metrics["log_loss"][0]]
 
             lower = np.percentile(boots, 2.5, axis=0)
             upper = np.percentile(boots, 97.5, axis=0)
