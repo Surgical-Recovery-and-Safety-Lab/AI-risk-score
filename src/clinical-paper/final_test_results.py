@@ -98,7 +98,7 @@ if __name__ == "__main__":
         pipeline = load_pipeline(load_file)
 
         data = pipeline.preprocessor.transform(data)
-        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024, 2023])
+        _, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -107,7 +107,6 @@ if __name__ == "__main__":
     try:
         print_message("Preparing test set", logger, script_name)
         X_test, y_test = extract_labels(X_test, pipeline.label_list)
-        X_train, y_train = extract_labels(X_train, pipeline.label_list)
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
