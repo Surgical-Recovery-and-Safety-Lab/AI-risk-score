@@ -12,7 +12,6 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from constants import COLOUR_MAP, LABEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from medpipe import (
@@ -29,6 +28,8 @@ from medpipe.utils.config import get_configuration, get_file_path, split_version
 from medpipe.utils.exceptions import file_checks
 from ml_insights import SplineCalib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+from constants import COLOUR_MAP, LABEL_MAP
 
 
 def plot_clinical_calibration(
@@ -105,7 +106,7 @@ def plot_clinical_calibration(
     )
 
     grid = np.linspace(0, 1, grid_resolution)
-    main_spline = SplineCalib()
+    main_spline = SplineCalib(logodds_scale=True)
     main_spline.fit(proba_list, y_test)
 
     boots = np.zeros((n_bootstraps, grid_resolution))
@@ -246,6 +247,7 @@ if __name__ == "__main__":
             )
         )
         data.fillna({"ASA": 0}, inplace=True)  # Fill ASA nan values to 0
+        data = data.drop("DHB_NAME", axis=1)
 
         # Load model
         print_message("Loading model", logger, script_name)
@@ -256,8 +258,7 @@ if __name__ == "__main__":
         pipeline = load_pipeline(load_file)
 
         data = pipeline.preprocessor.transform(data)
-        data = data.drop("DHB_NAME", axis=1)
-        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
+        _, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -266,7 +267,6 @@ if __name__ == "__main__":
     try:
         print_message("Preparing test set", logger, script_name)
         X_test, y_test = extract_labels(X_test, pipeline.label_list)
-        X_train, y_train = extract_labels(X_train, pipeline.label_list)
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
