@@ -11,7 +11,7 @@ import pathlib
 
 import matplotlib.pyplot as plt
 import numpy as np
-import statsmodels.api as sm
+from constants import MODEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from medpipe import (
@@ -26,20 +26,13 @@ from medpipe import (
     setup_logger,
 )
 from medpipe.utils.config import get_configuration, get_file_path
+from ml_insights import SplineCalib
 from pandas import DataFrame
-from scipy.special import logit
 
 METRIC_MAP = {
     "auroc": "AUROC",
     "log_loss": "Log loss",
-    "calibration_slope": "Calibration slope",
-    "calibration_intercept": "Calibration intercept",
-}
-METRIC_MAX = {
-    "auroc": 0.05,
-    "log_loss": 0.10,
-    "calibration_slope": 0.15,
-    "calibration_intercept": 0.20,
+    "ici": "ICI",
 }
 
 COLOUR_MAP = [
@@ -122,23 +115,27 @@ def compute_metrics(
 
         s_data = pipeline.preprocessor.transform(_data)
 
-        X_test, y_test = extract_labels(s_data, pipeline.label_list)
+        X_train, X_test = pipeline.get_test_data(s_data, test_group_vals=[2024])
+        X_train, y_train = extract_labels(X_train, pipeline.label_list)
+
+        X_test, y_test = extract_labels(X_test, pipeline.label_list)
+
         metric_dict = {}
 
         for i, label in enumerate(pipeline.label_list):
-            y_proba = pipeline.predict_proba(X_test, label, "calibrator")
-            y_pred_pos = get_positive_proba(y_proba)
+            y_proba = pipeline.predict_proba(X_test, label, MODEL_MAP[label])
+            y_proba_pos = np.squeeze(get_positive_proba(y_proba))
 
-            log_odds = logit(np.clip(y_pred_pos, 1e-15, 1 - 1e-15))
-            X = sm.add_constant(log_odds)
+            # Train SplineCalib on calibration data
+            y_train_proba = pipeline.predict_proba(X_train, label, MODEL_MAP[label])
+            y_train_pos = np.squeeze(get_positive_proba(y_train_proba))
+            spline = SplineCalib(logodds_scale=True)
+            spline.fit(y_train_pos, y_train[:, i])
+            smoothed_proba = spline.calibrate(y_proba_pos)
 
-            calib_model = sm.Logit(y_test[:, i], X).fit(disp=0)
-
-            intercept, slope = calib_model.params
             scores = compute_score_metrics(["auroc", "log_loss"], y_test[:, i], y_proba)
             metric_dict[label] = scores | {
-                "calibration_intercept": intercept,
-                "calibration_slope": slope,
+                "ici": np.mean(np.abs(smoothed_proba - y_proba_pos)),
             }
         stratified_scores[s] = metric_dict
 
@@ -202,31 +199,42 @@ def strata_heatmap(
 
         strata_list = []  # List to contain the strata names for x-axis
         strata_plot_data = []  # List to contain the data to plot
+        strata_plot_text = []  # List to contain text to display
 
-        for strata_name in strata_scores.keys():
-            for strata_key, strata_data in strata_scores[strata_name].items():
-                tmp_strata_data = []  # Create an empty list to store strata data
-                strata_list.append(strata_key)
+        for strata_key, strata_data in strata_scores.items():
+            tmp_strata_data = []  # Create an empty list to store strata data
+            tmp_strata_text = []  # Create an empty list to store text to display
+            strata_list.append(strata_key)
 
-                for outcome in outcome_list:
-                    # Get strata data for all outcomes
-                    tmp_strata_data.append(
+            for outcome in outcome_list:
+                # Get strata data for all outcomes
+                tmp_strata_data.append(
+                    np.abs(
                         np.array(og_scores[outcome][metric])
                         - np.array(strata_data[outcome][metric])
                     )
+                )
+                tmp_strata_text.append(np.array(strata_data[outcome][metric]))
 
-                strata_plot_data.append(np.array(tmp_strata_data))
+            strata_plot_data.append(np.array(tmp_strata_data))
+            strata_plot_text.append(np.array(tmp_strata_text))
 
         strata_plot_arr = np.squeeze(np.array(strata_plot_data))
-        max_val = METRIC_MAX[metric]  # Set the scale depending on the metric
+        strata_text_arr = np.squeeze(np.array(strata_plot_text))
+        max_val = 0.1
 
         # Display heatmap
-        im = ax.imshow(
-            strata_plot_arr, cmap="seismic", aspect="equal", vmin=-max_val, vmax=max_val
-        )
+        im = ax.imshow(strata_plot_arr, cmap="cividis", aspect="equal", vmax=max_val)
 
         # Set colorbar and ticks
-        fig.colorbar(im, ax=ax, cmap="seismic", shrink=0.8, extend="both")
+        fig.colorbar(
+            im,
+            ax=ax,
+            cmap="seismic",
+            shrink=0.8,
+            extend="max",
+            label=rf"|$\Delta$ {METRIC_MAP[metric]}|",
+        )
         ax.set_yticks(
             np.arange(len(strata_list)),
             labels=strata_list,
@@ -240,19 +248,19 @@ def strata_heatmap(
             rotation_mode="anchor",
             ha="left",
         )
-        ax.set_xlabel("Strata", fontweight="bold")
-        ax.set_ylabel("Outcomes", fontweight="bold")
+        ax.set_ylabel("Strata", fontweight="bold")
+        ax.set_xlabel("Outcomes", fontweight="bold")
 
         # Add text
         for i in range(len(outcome_label_list)):
             for j in range(len(strata_list)):
-                colour = "k"
-                if np.abs(strata_plot_arr[j, i]) >= 0.5 * max_val:
-                    colour = "w"
+                colour = "w"
+                if np.abs(strata_plot_arr[j, i]) >= 0.8 * max_val:
+                    colour = "k"
                 ax.text(
                     i,
                     j,
-                    np.round(strata_plot_arr[j, i], 2),
+                    np.round(strata_text_arr[j, i], 2),
                     ha="center",
                     va="center",
                     color=colour,
@@ -265,7 +273,7 @@ def strata_heatmap(
         # Set white space between squares
         ax.set_yticks(np.arange(len(strata_list) + 1) - 0.5, minor=True)
         ax.set_xticks(np.arange(len(outcome_list) + 1) - 0.5, minor=True)
-        ax.grid(which="minor", color="k", linestyle="-", linewidth=1)
+        ax.grid(which="minor", color="w", linestyle="-", linewidth=1)
         ax.tick_params(which="minor", bottom=False, left=False)
 
         plt.tight_layout()
@@ -334,26 +342,30 @@ if __name__ == "__main__":
         # Remove Overseas and undefined cases
         data.drop("DHB_NAME", axis=1, inplace=True)
     data.dropna(inplace=True)  # Remove Nan values
-    _, strata_data = pipeline.get_test_data(data, test_group_vals=[2024])
+    _, strata_data = pipeline.get_test_data(data, test_group_vals=[2023, 2024])
 
-    X_test, y_test = extract_labels(strata_data, pipeline.label_list)
+    X_train, X_test = pipeline.get_test_data(strata_data, test_group_vals=[2024])
+    X_train, y_train = extract_labels(X_train, pipeline.label_list)
+    X_train = pipeline.preprocessor.transform(X_train)
+
+    X_test, y_test = extract_labels(X_test, pipeline.label_list)
     X_test = pipeline.preprocessor.transform(X_test)
     og_metrics = {}  # Store the metrics for all labels with the original data
 
     for i, label in enumerate(pipeline.label_list):
-        y_proba = pipeline.predict_proba(X_test, label, "calibrator")
-        y_pred_pos = get_positive_proba(y_proba)
+        y_proba = pipeline.predict_proba(X_test, label, MODEL_MAP[label])
+        y_pred_pos = np.squeeze(get_positive_proba(y_proba))
 
-        log_odds = logit(np.clip(y_pred_pos, 1e-15, 1 - 1e-15))
-        X = sm.add_constant(log_odds)
+        # Train SplineCalib on calibration data
+        y_train_proba = pipeline.predict_proba(X_train, label, MODEL_MAP[label])
+        y_train_pos = np.squeeze(get_positive_proba(y_train_proba))
+        spline = SplineCalib(logodds_scale=True)
+        spline.fit(y_train_pos, y_train[:, i])
+        smoothed_proba = spline.calibrate(y_pred_pos)
 
-        calib_model = sm.Logit(y_test[:, i], X).fit(disp=0)
-
-        intercept, slope = calib_model.params
         scores = compute_score_metrics(["auroc", "log_loss"], y_test[:, i], y_proba)
         og_metrics[label] = scores | {
-            "calibration_intercept": intercept,
-            "calibration_slope": slope,
+            "ici": np.mean(np.abs(smoothed_proba - y_pred_pos)),
         }
 
     sex_strata = data["SEX"].unique()
@@ -364,7 +376,7 @@ if __name__ == "__main__":
     age_scores = compute_metrics(pipeline, strata_data, "AGE", age_strata)
     eth_scores = compute_metrics(pipeline, strata_data, "ETHNICITY", eth_strata)
 
-    strata_metrics = {"eth": eth_scores, "age": age_scores, "sex": sex_scores}
+    strata_metrics = {"All strata": og_metrics} | eth_scores | age_scores | sex_scores
 
     save_file = get_file_path(
         general_config,
@@ -379,7 +391,7 @@ if __name__ == "__main__":
         og_metrics,
         strata_metrics,
         dpi=300,
-        set_title=r"$\Delta$ ",
+        set_title=" ",
         show_fig=args.no_plots,
         save_path=save_file + "_mort_readmit_fairness_",
     )
@@ -390,7 +402,7 @@ if __name__ == "__main__":
         og_metrics,
         strata_metrics,
         dpi=300,
-        set_title=r"$\Delta$ ",
+        set_title=" ",
         show_fig=args.no_plots,
         save_path=save_file + "_fairness_",
     )
