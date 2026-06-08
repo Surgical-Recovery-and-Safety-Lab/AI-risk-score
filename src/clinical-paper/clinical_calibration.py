@@ -300,7 +300,7 @@ if __name__ == "__main__":
                 outcome=outcome,
                 label="Calibration",
                 distribution=True,
-                save_path=save_file + f"_{outcome}_best_reliability_diagram",
+                save_path=save_file + f"_{outcome}_reliability_diagram",
                 extension=extension,
                 n_bootstraps=4,
                 show_fig=args.no_plots,
