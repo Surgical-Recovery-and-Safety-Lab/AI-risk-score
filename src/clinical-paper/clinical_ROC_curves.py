@@ -28,7 +28,7 @@ from medpipe.utils.config import get_configuration, get_file_path, split_version
 from medpipe.utils.exceptions import file_checks
 from sklearn.metrics import roc_curve
 
-from constants import COLOUR_MAP, LABEL_MAP
+from constants import COLOUR_MAP, LABEL_MAP, MODEL_MAP
 
 
 def plot_ROC_curve(
@@ -226,7 +226,7 @@ if __name__ == "__main__":
         pipeline = load_pipeline(load_file)
 
         data = pipeline.preprocessor.transform(data)
-        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024, 2023])
+        X_train, X_test = pipeline.get_test_data(data, test_group_vals=[2024])
 
     except Exception:
         exception_handler(logger, log_dir, log_config, script_name)
@@ -254,9 +254,14 @@ if __name__ == "__main__":
 
         for i, outcome in enumerate(pipeline.label_list):
             print_message(outcome, logger, script_name)
-            y_pred_proba = pipeline.predict_proba(
-                X_test, label_list=outcome, model_type="predictor"
-            )
+            if MODEL_MAP[outcome] == "predictor":
+                y_pred_proba = pipeline.predict_proba(
+                    X_test, label_list=outcome, model_type="predictor"
+                )
+            else:
+                y_pred_proba = pipeline.predict_proba(
+                    X_test, label_list=outcome, model_type="calibrator"
+                )
             plot_ROC_curve(
                 y_test[:, i],
                 get_positive_proba(y_pred_proba).squeeze(),
