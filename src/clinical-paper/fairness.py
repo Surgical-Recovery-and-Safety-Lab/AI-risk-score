@@ -11,7 +11,6 @@ import pathlib
 
 import matplotlib.pyplot as plt
 import numpy as np
-from constants import MODEL_MAP
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from medpipe import (
@@ -28,6 +27,8 @@ from medpipe import (
 from medpipe.utils.config import get_configuration, get_file_path
 from ml_insights import SplineCalib
 from pandas import DataFrame
+
+from constants import MODEL_MAP
 
 METRIC_MAP = {
     "auroc": "AUROC",
@@ -195,7 +196,12 @@ def strata_heatmap(
         fig, ax = plt.subplots(**fig_kwargs)
 
         # Set title
-        ax.set_title(title + METRIC_MAP[metric], fontweight="bold")
+        if metric == "ici":
+            ax.set_title(
+                title + METRIC_MAP[metric] + r"$\times 10^{-3}$", fontweight="bold"
+            )
+        else:
+            ax.set_title(title + METRIC_MAP[metric], fontweight="bold")
 
         strata_list = []  # List to contain the strata names for x-axis
         strata_plot_data = []  # List to contain the data to plot
@@ -210,8 +216,8 @@ def strata_heatmap(
                 # Get strata data for all outcomes
                 tmp_strata_data.append(
                     np.abs(
-                        np.array(og_scores[outcome][metric])
-                        - np.array(strata_data[outcome][metric])
+                        np.array(strata_data[outcome][metric])
+                        - np.array(og_scores[outcome][metric])
                     )
                 )
                 tmp_strata_text.append(np.array(strata_data[outcome][metric]))
@@ -222,6 +228,9 @@ def strata_heatmap(
         strata_plot_arr = np.squeeze(np.array(strata_plot_data))
         strata_text_arr = np.squeeze(np.array(strata_plot_text))
         max_val = 0.1
+        if metric == "ici":
+            strata_text_arr *= 1000
+            max_val = 0.005
 
         # Display heatmap
         im = ax.imshow(strata_plot_arr, cmap="cividis", aspect="equal", vmax=max_val)
@@ -230,7 +239,7 @@ def strata_heatmap(
         fig.colorbar(
             im,
             ax=ax,
-            cmap="seismic",
+            cmap="cividis",
             shrink=0.8,
             extend="max",
             label=rf"|$\Delta$ {METRIC_MAP[metric]}|",
@@ -362,7 +371,6 @@ if __name__ == "__main__":
         spline = SplineCalib(logodds_scale=True)
         spline.fit(y_train_pos, y_train[:, i])
         smoothed_proba = spline.calibrate(y_pred_pos)
-
         scores = compute_score_metrics(["auroc", "log_loss"], y_test[:, i], y_proba)
         og_metrics[label] = scores | {
             "ici": np.mean(np.abs(smoothed_proba - y_pred_pos)),
