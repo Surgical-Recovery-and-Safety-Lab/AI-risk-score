@@ -25,6 +25,7 @@ from medpipe import (
     setup_logger,
 )
 from medpipe.utils.config import get_configuration, get_file_path, split_version_number
+from ml_insights import SplineCalib
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -138,14 +139,24 @@ if __name__ == "__main__":
             for key in pipeline.predictor_probabilities[outcome]:
                 # Get probabilities from each fold
                 y_test = y_train[X_train[group_name] == key]
+                y_pred = pipeline.predictor_probabilities[outcome][key]
                 metric_dict_natural[key] = compute_score_metrics(
-                    ["auroc", "log_loss"],
+                    ["auroc"],
                     y_test[:, i],
-                    get_full_proba(pipeline.predictor_probabilities[outcome][key]),
+                    get_full_proba(y_pred),
                 )
+
+                # Train SplineCalib
+                spline = SplineCalib(logodds_scale=True)
+                spline.fit(np.squeeze(y_pred), y_test[:, i])
+                smoothed_proba = spline.calibrate(np.squeeze(y_pred))
+                metric_dict_natural[key] = metric_dict_natural[key] | {
+                    "ici": [np.mean(np.abs(smoothed_proba - np.squeeze(y_pred)) * 1000)]
+                }
+
                 long_dict[key] = {
                     f"{outcome}_auroc": metric_dict_natural[key]["auroc"][0],
-                    f"{outcome}_log_loss": metric_dict_natural[key]["log_loss"][0],
+                    f"{outcome}_ici": metric_dict_natural[key]["ici"][0],
                 }
             ci_dict_natural = compute_all_CI(metric_dict_natural)
 
@@ -154,8 +165,8 @@ if __name__ == "__main__":
             df_dict["auroc"] = (
                 f"{ci_dict_natural["auroc"][0][0]:.2f} ({ci_dict_natural["auroc"][1][0]:.2f} -- {ci_dict_natural["auroc"][2][0]:.2f})"
             )
-            df_dict["log_loss"] = (
-                f"{ci_dict_natural["log_loss"][0][0]:.2f} ({ci_dict_natural["log_loss"][1][0]:.2f} -- {ci_dict_natural["log_loss"][2][0]:.2f})"
+            df_dict["ici"] = (
+                f"{ci_dict_natural["ici"][0][0]:.2f} ({ci_dict_natural["ici"][1][0]:.2f} -- {ci_dict_natural["ici"][2][0]:.2f})"
             )
             df = pd.concat([df, pd.DataFrame(df_dict, index=[i])], ignore_index=True)
             long_df = pd.concat(
