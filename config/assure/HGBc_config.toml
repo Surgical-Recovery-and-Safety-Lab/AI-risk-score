@@ -1,0 +1,16 @@
+[meta]
+version = "v0.1.1"  # Used to get data, workflow, and hyperparameters
+project_name = "assure"
+run_mode = "fast"
+
+[paths]
+# Paths can be relative or absolute
+config_dir = "~/Documents/srs/AI-risk-score/config/assure/HGBc/"
+model_dir = "../../models/"  # Save model directory
+figure_dir = "../../figures/"  # Directory to save figures
+
+[model]
+algorithm = "HistGradientBoostingClassifier"
+
+[recalibration]
+method = "IsotonicRegression"

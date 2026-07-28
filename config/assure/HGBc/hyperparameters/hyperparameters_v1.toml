@@ -1,0 +1,11 @@
+[hyperparameters]
+[hyperparameters.predictor]
+learning_rate = 0.05
+loss = "log_loss"
+max_leaf_nodes = 50
+min_samples_leaf = 100
+max_iter = 200
+early_stopping = true
+
+[hyperparameters.recalibrator]
+out_of_bounds = "clip"

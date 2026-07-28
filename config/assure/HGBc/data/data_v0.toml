@@ -1,0 +1,40 @@
+# Path can be relative or absolute
+path = "../../data/clinical/processed/ai_risk_data-v0.5.csv"  # Example path
+
+predictors = [
+  "AGE",
+  "ETHNICITY",
+  "SEX",
+  "ASA",
+  "PRIOR_CANCER",
+  "ADMISSION_ACUITY",
+  "ADMISSION_SOURCE",
+  "CATEGORY_LEVEL_1",
+  "CATEGORY_LEVEL_2",
+  "OP_SEVERITY",
+  "TRAUMA",
+]
+
+outcomes = [
+  "MORTALITY_30D",
+  "MORTALITY_90D",
+  "MORTALITY_1Y",
+  "READMIT_ACUTE_30D",
+  "READMIT_ACUTE_90D",
+  "ANY_COMP",
+  "AKI",
+  "CARDIAC_ARRHYTHMIA",
+  "DELIRIUM",
+  "GI_BLEEDING",
+  "HAEMORRHAGE",
+  "IMPLANT_GRAFT",
+  "MYOCARDIAL_EVENT",
+  "PNEUMONIA",
+  "RESPIRATORY_FAILURE",
+  "SEPSIS",
+  "SHOCK",
+  "STROKE",
+  "SSI",
+  "UTI",
+  "VTE",
+]

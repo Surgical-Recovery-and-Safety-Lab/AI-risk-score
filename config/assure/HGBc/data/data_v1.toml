@@ -1,0 +1,17 @@
+# Path can be relative or absolute
+path = "../../data/data.csv"  # Example path
+
+predictors = [
+  "AGE",
+  "SEX",
+  "PRIOR_CANCER",
+  "ADMISSION_ACUITY",
+  "ADMISSION_SOURCE",
+  "CATEGORY_LEVEL_1",
+  "DHB_NAME",
+  "OP_SEVERITY",
+  "TRAUMA",
+  "OP_YEAR",
+]
+
+outcomes = ["MORTALITY_30D", "ANY_COMP"]

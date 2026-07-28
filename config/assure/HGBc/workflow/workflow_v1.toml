@@ -1,0 +1,36 @@
+[preprocessing]
+preprocess = true  # Perform preprocessing if true
+
+# Operations are run in order
+operations = [
+  { name = "OrdinalEncoder", columns = [
+    "SEX",
+    "ETHNICITY",
+    "ADMISSION_ACUITY",
+    "ADMISSION_SOURCE",
+    "CATEGORY_LEVEL_1",
+    "CATEGORY_LEVEL_2",
+  ] },
+]
+
+[validation]
+[validation.test_split]  # Test / train splitting variables
+strategy = "group"  # Can be random, group, or none
+group_column = "OP_YEAR"  # Group to use to extract test set
+values = [2024]  # Values of group to extract the test set
+
+[validation.recalibration_split]  # Recalibration data splitting variables
+strategy = "group"  # Can be random, group, or none
+group_column = "OP_YEAR"  # Group to use to extract test set
+values = [2023]  # Values of group to extract the recalibration set
+
+[validation.cross_validation]  # Cross-validation variables
+strategy = "group"  # Can be random, group, or none
+group_column = "DHB_NAME"
+n_splits = 20  # Number of groups (group strategy) or folds (random strategy)
+shuffle = true
+random_state = 42
+
+[evaluation]
+[evaluation.metrics]
+metrics = ["auroc", "log_loss"]
