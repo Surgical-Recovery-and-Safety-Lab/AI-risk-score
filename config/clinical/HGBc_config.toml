@@ -1,10 +1,10 @@
-version = "v0.5.1.2-a.1.3.2"
+version = "v0.5.1.2-a.1.3.2.dev0"
 predictor_type = "hgb-c"
 base_dir = "/home/mroe734/Documents/srs/AI-risk-score/"
 
 [model_parameters]
 dir = "config/clinical/HGBc/"
-subfolders = [ "labels", "imbalance", "hyperparameters", "calibrator" ]
+subfolders = ["labels", "imbalance", "hyperparameters", "calibrator"]
 name = "ai_risk_HGBc_"
 extension = ".toml"
 
@@ -20,6 +20,6 @@ extension = ".png"
 
 [data_parameters]
 dir = "config/clinical/data/"
-subfolders = [ "general", "features", "splitting", "preprocessing" ]
+subfolders = ["general", "features", "splitting", "preprocessing"]
 name = "ai_risk_data_"
 extension = ".toml"
