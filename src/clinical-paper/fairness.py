@@ -197,9 +197,7 @@ def strata_heatmap(
 
         # Set title
         if metric == "ici":
-            ax.set_title(
-                title + METRIC_MAP[metric] + r"$\times 10^{-3}$", fontweight="bold"
-            )
+            ax.set_title(title + METRIC_MAP[metric] + " (%)", fontweight="bold")
         else:
             ax.set_title(title + METRIC_MAP[metric], fontweight="bold")
 
@@ -228,9 +226,12 @@ def strata_heatmap(
         strata_plot_arr = np.squeeze(np.array(strata_plot_data))
         strata_text_arr = np.squeeze(np.array(strata_plot_text))
         max_val = 0.1
+        percent = ""
         if metric == "ici":
-            strata_text_arr *= 1000
-            max_val = 0.005
+            strata_text_arr *= 100
+            strata_plot_arr *= 100
+            max_val = 0.5
+            percent = " (%)"
 
         # Display heatmap
         im = ax.imshow(strata_plot_arr, cmap="cividis", aspect="equal", vmax=max_val)
@@ -242,7 +243,7 @@ def strata_heatmap(
             cmap="cividis",
             shrink=0.8,
             extend="max",
-            label=rf"|$\Delta$ {METRIC_MAP[metric]}|",
+            label=rf"|$\Delta$ {METRIC_MAP[metric]}|" + percent,
         )
         ax.set_yticks(
             np.arange(len(strata_list)),
