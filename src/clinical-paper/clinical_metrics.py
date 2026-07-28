@@ -90,7 +90,6 @@ if __name__ == "__main__":
                 data_config, v_number=data_version[:4]  # Use only first 2 numbers
             )
         )
-        data.fillna({"ASA": 0}, inplace=True)  # Fill ASA nan values to 0
 
         # Load model
         print_message("Loading model", logger, script_name)
@@ -151,7 +150,7 @@ if __name__ == "__main__":
                 spline.fit(np.squeeze(y_pred), y_test[:, i])
                 smoothed_proba = spline.calibrate(np.squeeze(y_pred))
                 metric_dict_natural[key] = metric_dict_natural[key] | {
-                    "ici": [np.mean(np.abs(smoothed_proba - np.squeeze(y_pred)) * 1000)]
+                    "ici": [np.mean(np.abs(smoothed_proba - np.squeeze(y_pred)) * 100)]
                 }
 
                 long_dict[key] = {
